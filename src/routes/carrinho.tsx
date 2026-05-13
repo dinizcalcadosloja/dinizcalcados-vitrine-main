@@ -51,7 +51,7 @@ function CarrinhoRoot() {
         <StoreHeader store={store} />
         <CartContent />
         <footer className="mt-16 border-t border-border py-8 text-center text-xs text-muted-foreground">
-          Powered by Amanda
+          Powered by Amanda Miranda
         </footer>
       </div>
     </StoreCtx.Provider>
