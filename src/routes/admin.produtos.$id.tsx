@@ -25,19 +25,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  ArrowLeft, 
-  Plus, 
-  Trash2, 
-  Save, 
-  Copy, 
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Save,
+  Copy,
   ExternalLink,
   ChevronRight,
   Package,
   Image as ImageIcon,
   Settings,
   Tag,
-  BadgeDollarSign
+  BadgeDollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +65,11 @@ function ProductEditor() {
   const [busy, setBusy] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
-  const { data: product, refetch, isLoading: loadingProduct } = useQuery({
+  const {
+    data: product,
+    refetch,
+    isLoading: loadingProduct,
+  } = useQuery({
     queryKey: ["product", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -180,16 +184,21 @@ function ProductEditor() {
     // Sync images: delete all then insert
     await supabase.from("product_images").delete().eq("product_id", id);
     if (images.length) {
-      await supabase
+      const { error: imagesError } = await supabase
         .from("product_images")
         .insert(images.map((url, i) => ({ product_id: id, url, position: i })));
+
+      if (imagesError) {
+        setBusy(false);
+        return toast.error(`Erro ao salvar imagens: ${imagesError.message}`);
+      }
     }
 
     // Sync variants
     await supabase.from("product_variants").delete().eq("product_id", id);
     const validVariants = variants.filter((v) => v.size || v.color || v.numbering);
     if (validVariants.length) {
-      await supabase.from("product_variants").insert(
+      const { error: variantsError } = await supabase.from("product_variants").insert(
         validVariants.map((v) => ({
           product_id: id,
           size: v.size || null,
@@ -197,6 +206,11 @@ function ProductEditor() {
           numbering: v.numbering || null,
         })),
       );
+
+      if (variantsError) {
+        setBusy(false);
+        return toast.error(`Erro ao salvar variações: ${variantsError.message}`);
+      }
     }
 
     // Sync color images
@@ -210,12 +224,19 @@ function ProductEditor() {
       });
     }
     if (colorRows.length) {
-      await supabase.from("product_color_images").insert(colorRows);
+      const { error: colorImagesError } = await supabase
+        .from("product_color_images")
+        .insert(colorRows);
+
+      if (colorImagesError) {
+        setBusy(false);
+        return toast.error(`Erro ao salvar imagens de cores: ${colorImagesError.message}`);
+      }
     }
 
     setBusy(false);
     toast.success("Produto atualizado com sucesso!");
-    navigate({ to: "/admin/produtos" });
+    await refetch();
   }
 
   async function remove() {
@@ -231,7 +252,7 @@ function ProductEditor() {
 
     // Criar cópia do produto
     if (!product) return;
-    
+
     const { data: newProduct, error: productError } = await supabase
       .from("products")
       .insert({
@@ -296,20 +317,32 @@ function ProductEditor() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/admin/produtos" className="hover:text-foreground">Produtos</Link>
+            <Link to="/admin/produtos" className="hover:text-foreground">
+              Produtos
+            </Link>
             <ChevronRight className="h-4 w-4" />
             <span>Editar Produto</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {form.name || "Sem nome"}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">{form.name || "Sem nome"}</h1>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowDuplicateDialog(true)} disabled={busy} className="hidden sm:flex">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDuplicateDialog(true)}
+            disabled={busy}
+            className="hidden sm:flex"
+          >
             <Copy className="mr-2 h-4 w-4" /> Duplicar
           </Button>
-          <Button variant="outline" size="sm" onClick={remove} disabled={busy} className="text-destructive hover:bg-destructive/10">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={remove}
+            disabled={busy}
+            className="text-destructive hover:bg-destructive/10"
+          >
             <Trash2 className="mr-2 h-4 w-4" /> Excluir
           </Button>
           <Button size="sm" onClick={save} disabled={busy}>
@@ -323,7 +356,8 @@ function ProductEditor() {
           <AlertDialogHeader>
             <AlertDialogTitle>Duplicar produto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Isso criará uma cópia completa deste produto. O novo produto ficará como rascunho por padrão.
+              Isso criará uma cópia completa deste produto. O novo produto ficará como rascunho por
+              padrão.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -347,11 +381,11 @@ function ProductEditor() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do produto</Label>
-                <Input 
+                <Input
                   id="name"
                   placeholder="Ex: Camiseta Oversized Algodão"
-                  value={form.name} 
-                  onChange={(e) => setForm({ ...form, name: e.target.value })} 
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -390,7 +424,9 @@ function ProductEditor() {
                   Grade de Cores e Tamanhos
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="has_variations" className="text-xs font-normal">Possui variações?</Label>
+                  <Label htmlFor="has_variations" className="text-xs font-normal">
+                    Possui variações?
+                  </Label>
                   <Switch
                     id="has_variations"
                     checked={form.has_variations}
@@ -399,15 +435,15 @@ function ProductEditor() {
                 </div>
               </CardTitle>
               <CardDescription>
-                {form.has_variations 
-                  ? "Gerencie as cores e tamanhos disponíveis para este produto" 
+                {form.has_variations
+                  ? "Gerencie as cores e tamanhos disponíveis para este produto"
                   : "Este produto será vendido como item único"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {form.has_variations ? (
-                <VariantsEditor 
-                  variants={variants} 
+                <VariantsEditor
+                  variants={variants}
                   setVariants={setVariants}
                   colorImages={colorImages}
                   setColorImages={setColorImages}
@@ -449,7 +485,9 @@ function ProductEditor() {
                   onChange={(e) => setForm({ ...form, compare_at_price: e.target.value })}
                   placeholder="Ex: 199.90"
                 />
-                <p className="text-[10px] text-muted-foreground">Exibe o preço riscado (promoção)</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Exibe o preço riscado (promoção)
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -481,7 +519,9 @@ function ProductEditor() {
                   <SelectContent>
                     <SelectItem value="none">Sem departamento</SelectItem>
                     {departments.map((d: any) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -494,12 +534,16 @@ function ProductEditor() {
                   disabled={!departmentId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={departmentId ? "Selecione" : "Escolha um departamento"} />
+                    <SelectValue
+                      placeholder={departmentId ? "Selecione" : "Escolha um departamento"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem categoria</SelectItem>
                     {subcategories.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -540,7 +584,11 @@ function ProductEditor() {
           {/* Ver na loja */}
           {product && (
             <Button variant="outline" className="w-full" asChild>
-              <a href={`/loja/${store?.slug}/produto/${product.id}`} target="_blank" rel="noreferrer">
+              <a
+                href={`/loja/${store?.slug}/produto/${product.id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 <ExternalLink className="mr-2 h-4 w-4" /> Ver na vitrine
               </a>
             </Button>
@@ -597,7 +645,7 @@ function VariantsEditor({
     const next = newName.trim();
     if (!next || next === oldName) return;
     setVariants(variants.map((v) => (v.color === oldName ? { ...v, color: next } : v)));
-    
+
     if (colorImages[oldName]) {
       const nextImages = { ...colorImages };
       nextImages[next] = nextImages[oldName];
@@ -647,17 +695,19 @@ function VariantsEditor({
           const sizeRows = rows.filter((r) => r.size);
           const numberingRows = rows.filter((r) => !r.size);
           return (
-            <div 
-              key={color} 
-              ref={el => { colorRefs.current[color] = el; }}
+            <div
+              key={color}
+              ref={(el) => {
+                colorRefs.current[color] = el;
+              }}
               className="rounded-xl border border-border bg-card overflow-hidden"
             >
               <div className="p-4 border-b border-border bg-muted/30">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-1">
-                    <div 
-                      className="w-4 h-4 rounded-full border border-border" 
-                      style={{ backgroundColor: color.toLowerCase() }} 
+                    <div
+                      className="w-4 h-4 rounded-full border border-border"
+                      style={{ backgroundColor: color.toLowerCase() }}
                     />
                     <Input
                       defaultValue={color}
@@ -665,7 +715,13 @@ function VariantsEditor({
                       className="h-8 max-w-[200px] font-bold bg-transparent border-none focus-visible:ring-0 px-0 text-base"
                     />
                   </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeColor(color)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeColor(color)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -674,7 +730,9 @@ function VariantsEditor({
               <div className="p-4 space-y-6">
                 {/* Imagens da Cor */}
                 <div className="space-y-3">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Fotos desta cor</Label>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                    Fotos desta cor
+                  </Label>
                   <MultiImageUpload
                     values={colorImages[color] ?? []}
                     onChange={(urls) => {
@@ -690,8 +748,10 @@ function VariantsEditor({
 
                 {/* Tamanhos */}
                 <div className="space-y-4">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Grade de Tamanhos</Label>
-                  
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                    Grade de Tamanhos
+                  </Label>
+
                   <div className="flex flex-wrap gap-2">
                     {COMMON_SIZES.map((s) => {
                       const active = sizeRows.some((r) => r.size === s);
@@ -713,7 +773,10 @@ function VariantsEditor({
                   {sizeRows.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {sizeRows.map((v, i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10">
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
+                        >
                           <span className="w-8 h-8 flex items-center justify-center rounded bg-muted text-xs font-bold">
                             {v.size}
                           </span>
@@ -736,7 +799,10 @@ function VariantsEditor({
                       <p className="text-xs text-muted-foreground">Numeração Personalizada</p>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {numberingRows.map((v, i) => (
-                          <div key={i} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10">
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
+                          >
                             <Input
                               placeholder="Nº"
                               value={v.numbering}

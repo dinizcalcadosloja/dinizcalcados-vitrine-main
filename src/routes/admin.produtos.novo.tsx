@@ -8,17 +8,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { 
-  ChevronRight, 
-  Package, 
-  Save, 
-  Tag, 
+import { MultiImageUpload } from "@/components/image-upload";
+import {
+  ChevronRight,
+  Package,
+  Save,
+  Tag,
   BadgeDollarSign,
-  Settings
+  Settings,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin/produtos/novo")({
   component: NewProduct,
@@ -28,6 +36,7 @@ function NewProduct() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -43,7 +52,11 @@ function NewProduct() {
     queryKey: ["my-store", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase.from("stores").select("*").eq("owner_id", user!.id).maybeSingle();
+      const { data, error } = await supabase
+        .from("stores")
+        .select("*")
+        .eq("owner_id", user!.id)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -70,7 +83,7 @@ function NewProduct() {
   async function create() {
     if (!store) return;
     if (!form.name) return toast.error("O nome do produto é obrigatório");
-    
+
     setBusy(true);
     const { data: product, error } = await supabase
       .from("products")
@@ -93,6 +106,13 @@ function NewProduct() {
       return toast.error(error.message);
     }
 
+    // Salvar imagens
+    if (images.length > 0) {
+      await supabase
+        .from("product_images")
+        .insert(images.map((url, i) => ({ product_id: product.id, url, position: i })));
+    }
+
     toast.success("Produto criado com sucesso!");
     navigate({ to: "/admin/produtos" });
   }
@@ -104,13 +124,15 @@ function NewProduct() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/admin/produtos" className="hover:text-foreground">Produtos</Link>
+            <Link to="/admin/produtos" className="hover:text-foreground">
+              Produtos
+            </Link>
             <ChevronRight className="h-4 w-4" />
             <span>Novo Produto</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Criar Produto</h1>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate({ to: "/admin/produtos" })}>
             Cancelar
@@ -133,11 +155,11 @@ function NewProduct() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do produto</Label>
-                <Input 
+                <Input
                   id="name"
                   placeholder="Ex: Camiseta Oversized Algodão"
-                  value={form.name} 
-                  onChange={(e) => setForm({ ...form, name: e.target.value })} 
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -153,6 +175,20 @@ function NewProduct() {
             </CardContent>
           </Card>
 
+          {/* Imagens */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-primary" />
+                Imagens do Produto
+              </CardTitle>
+              <CardDescription>A primeira imagem será a capa da vitrine</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MultiImageUpload values={images} onChange={setImages} />
+            </CardContent>
+          </Card>
+
           {/* Grade */}
           <Card>
             <CardHeader>
@@ -162,7 +198,9 @@ function NewProduct() {
                   Grade de Cores e Tamanhos
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="has_variations" className="text-xs font-normal">Possui variações?</Label>
+                  <Label htmlFor="has_variations" className="text-xs font-normal">
+                    Possui variações?
+                  </Label>
                   <Switch
                     id="has_variations"
                     checked={form.has_variations}
@@ -171,15 +209,16 @@ function NewProduct() {
                 </div>
               </CardTitle>
               <CardDescription>
-                {form.has_variations 
-                  ? "Você poderá adicionar variações após salvar o produto." 
+                {form.has_variations
+                  ? "Você poderá adicionar variações após salvar o produto."
                   : "Este produto será vendido como item único."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {form.has_variations && (
                 <p className="text-sm text-muted-foreground italic">
-                  Opções de grade (cor/tamanho) ficarão disponíveis na tela de edição logo após a criação.
+                  Opções de grade (cor/tamanho) ficarão disponíveis na tela de edição logo após a
+                  criação.
                 </p>
               )}
             </CardContent>
@@ -227,21 +266,43 @@ function NewProduct() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Departamento</Label>
-                <Select value={deptId || "none"} onValueChange={(v) => { setDeptId(v === "none" ? "" : v); setForm({...form, category_id: ""}); }}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <Select
+                  value={deptId || "none"}
+                  onValueChange={(v) => {
+                    setDeptId(v === "none" ? "" : v);
+                    setForm({ ...form, category_id: "" });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem departamento</SelectItem>
-                    {departments.map((d: any) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
+                    {departments.map((d: any) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Select value={form.category_id || "none"} onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? "" : v })} disabled={!deptId}>
-                  <SelectTrigger><SelectValue placeholder={deptId ? "Selecione" : "Escolha um departamento"} /></SelectTrigger>
+                <Select
+                  value={form.category_id || "none"}
+                  onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? "" : v })}
+                  disabled={!deptId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={deptId ? "Selecione" : "Escolha um departamento"} />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem categoria</SelectItem>
-                    {subcategories.map((c: any) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
+                    {subcategories.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -249,15 +310,27 @@ function NewProduct() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg">Publicação</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg">Publicação</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5"><Label>Ativo</Label></div>
-                <Switch checked={form.active} onCheckedChange={(c) => setForm({ ...form, active: c })} />
+                <div className="space-y-0.5">
+                  <Label>Ativo</Label>
+                </div>
+                <Switch
+                  checked={form.active}
+                  onCheckedChange={(c) => setForm({ ...form, active: c })}
+                />
               </div>
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5"><Label>Destaque</Label></div>
-                <Switch checked={form.featured} onCheckedChange={(c) => setForm({ ...form, featured: c })} />
+                <div className="space-y-0.5">
+                  <Label>Destaque</Label>
+                </div>
+                <Switch
+                  checked={form.featured}
+                  onCheckedChange={(c) => setForm({ ...form, featured: c })}
+                />
               </div>
             </CardContent>
           </Card>
