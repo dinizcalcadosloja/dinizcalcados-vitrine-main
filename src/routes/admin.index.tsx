@@ -216,7 +216,7 @@ function AdminHome() {
               target="_blank"
               rel="noreferrer"
             >
-              marianomenswear.app/loja/{store.slug}
+              www.marianomenswear.com.br
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
