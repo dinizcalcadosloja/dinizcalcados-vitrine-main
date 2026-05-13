@@ -95,11 +95,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
     ],
     links: [
-      {
-        rel: "icon",
-        href: "https://dhpsrhbxhaaprmotbabb.supabase.co/storage/v1/object/public/store-assets/923a30da-db7d-469e-bc36-511e4b0f2df5.png",
-        type: "image/png",
-      },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },

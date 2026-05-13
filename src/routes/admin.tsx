@@ -149,10 +149,12 @@ function AdminLayout() {
       {/* Mobile Header */}
       <header className="fixed top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border/60 bg-white/80 px-4 backdrop-blur-md md:hidden">
         <Link to="/admin" className="flex items-center gap-2 font-bold tracking-tight">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            V
-          </div>
-          <span>marianomenswear</span>
+          <img
+            src="https://dhpsrhbxhaaprmotbabb.supabase.co/storage/v1/object/public/store-assets/923a30da-db7d-469e-bc36-511e4b0f2df5.png"
+            alt="Mariano Mens Wear"
+            className="h-8 w-8 rounded-full object-cover shadow-sm shrink-0"
+          />
+          <span>Mariano Mens Wear</span>
         </Link>
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
