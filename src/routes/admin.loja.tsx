@@ -200,20 +200,6 @@ function StoreSettings() {
             onChange={(e) => setForm({ ...form, theme_color: e.target.value })}
           />
         </div>
-        <div className="space-y-2">
-          <Label>Slug (URL pública)</Label>
-          <Input
-            value={form.slug}
-            onChange={(e) => setForm({ ...form, slug: normalizeSlug(e.target.value) })}
-            placeholder="minha-loja"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            Sua loja ficará em: <strong>/loja/{form.slug || "..."}</strong>
-            <br />
-            Use apenas letras minúsculas, números e hífens.
-          </p>
-        </div>
         <Button type="submit">Salvar alterações</Button>
       </form>
     </div>
