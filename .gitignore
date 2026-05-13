@@ -18,7 +18,6 @@ dist-ssr
 
 # Environment variables (contains secrets)
 .env
-.env.*
 
 # Wrangler / Cloudflare
 .wrangler/
