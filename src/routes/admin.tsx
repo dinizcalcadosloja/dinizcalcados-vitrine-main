@@ -109,7 +109,7 @@ function AdminLayout() {
         <div className="rounded-2xl bg-muted/50 p-4 border border-border/50">
           {store && (
             <a
-              href={`/loja/${store.slug}`}
+              href="https://www.marianomenswear.com.br"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between group mb-4"
@@ -117,7 +117,7 @@ function AdminLayout() {
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-foreground">Sua Loja</span>
                 <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                  /{store.slug}
+                  marianomenswear.com.br
                 </span>
               </div>
               <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center border border-border group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm">
