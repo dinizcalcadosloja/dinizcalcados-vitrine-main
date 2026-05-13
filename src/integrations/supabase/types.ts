@@ -278,6 +278,32 @@ export type Database = {
         };
         Relationships: [];
       };
+      store_visit_counts: {
+        Row: {
+          store_id: string;
+          day: string;
+          count: number;
+        };
+        Insert: {
+          store_id: string;
+          day?: string;
+          count?: number;
+        };
+        Update: {
+          store_id?: string;
+          day?: string;
+          count?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "store_visit_counts_store_id_fkey";
+            columns: ["store_id"];
+            isOneToOne: false;
+            referencedRelation: "stores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_roles: {
         Row: {
           created_at: string;

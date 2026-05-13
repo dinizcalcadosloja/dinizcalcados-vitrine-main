@@ -69,17 +69,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Vitrina — Catálogo digital para sua loja" },
-      { name: "description", content: "Crie um catálogo digital lindo, com pedidos via WhatsApp." },
-      { property: "og:title", content: "Vitrina — Catálogo digital para sua loja" },
-      { name: "twitter:title", content: "Vitrina — Catálogo digital para sua loja" },
+      { title: "MarianoMensWear - Loja Online" },
+      { name: "description", content: "MarianoMensWear - Loja Online" },
+      { property: "og:title", content: "MarianoMensWear - Loja Online" },
+      { name: "twitter:title", content: "MarianoMensWear - Loja Online" },
       {
         property: "og:description",
-        content: "Crie um catálogo digital lindo, com pedidos via WhatsApp.",
+        content: "MarianoMensWear - Loja Online",
       },
       {
         name: "twitter:description",
-        content: "Crie um catálogo digital lindo, com pedidos via WhatsApp.",
+        content: "MarianoMensWear - Loja Online",
       },
       {
         property: "og:image",

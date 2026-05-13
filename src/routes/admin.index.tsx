@@ -158,7 +158,7 @@ function AdminHome() {
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pr-1 pointer-events-none border-r border-border/40 bg-muted/30 group-focus-within:bg-muted/50 rounded-l-xl transition-colors">
                     <span className="text-xs font-medium text-muted-foreground">
-                      vitrina.app/loja/
+                      marianomenswear.app/loja/
                     </span>
                   </div>
                   <Input
@@ -216,7 +216,7 @@ function AdminHome() {
               target="_blank"
               rel="noreferrer"
             >
-              vitrina.app/loja/{store.slug}
+              marianomenswear.app/loja/{store.slug}
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>

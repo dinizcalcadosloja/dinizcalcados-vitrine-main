@@ -152,7 +152,7 @@ function AdminLayout() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             V
           </div>
-          <span>Vitrina</span>
+          <span>marianomenswear</span>
         </Link>
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
