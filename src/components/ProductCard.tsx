@@ -7,11 +7,10 @@ import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   p: any;
-  slug: string;
 }
 
-export function ProductCard({ p, slug }: ProductCardProps) {
-  const { toggle, isFavorite } = useFavorites(slug);
+export function ProductCard({ p }: ProductCardProps) {
+  const { toggle, isFavorite } = useFavorites("marianomenswear");
   const favorited = isFavorite(p.id);
 
   const cover = p.product_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url;
@@ -49,8 +48,8 @@ export function ProductCard({ p, slug }: ProductCardProps) {
 
       {/* Image Container */}
       <Link
-        to="/loja/$slug/produto/$productId"
-        params={{ slug, productId: p.id }}
+        to="/produto/$productId"
+        params={{ productId: p.id }}
         className="aspect-[3/4] overflow-hidden bg-slate-50/50 rounded-[0.8rem] sm:rounded-[1.5rem] flex items-center justify-center relative mb-2 sm:mb-4"
       >
         {cover ? (
@@ -80,8 +79,8 @@ export function ProductCard({ p, slug }: ProductCardProps) {
       {/* Info Container */}
       <div className="px-1 pb-2 flex flex-col flex-1">
         <Link
-          to="/loja/$slug/produto/$productId"
-          params={{ slug, productId: p.id }}
+          to="/produto/$productId"
+          params={{ productId: p.id }}
           className="hover:text-emerald-600 transition-colors"
         >
           <h3 className="line-clamp-2 text-[0.85rem] sm:text-[0.95rem] font-semibold text-slate-800 leading-tight mb-1 sm:mb-2">

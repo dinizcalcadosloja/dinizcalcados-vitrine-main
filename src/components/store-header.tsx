@@ -41,11 +41,7 @@ export function StoreHeader({ store }: { store: any }) {
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 w-full">
         <div className="flex h-16 sm:h-20 items-center justify-between gap-2 w-full">
           {/* Logo */}
-          <Link
-            to="/loja/$slug"
-            params={{ slug: store.slug }}
-            className="flex items-center gap-1.5 sm:gap-3 group min-w-0"
-          >
+          <Link to="/" className="flex items-center gap-1.5 sm:gap-3 group min-w-0">
             {store.logo_url ? (
               <img
                 src={store.logo_url}
@@ -181,7 +177,7 @@ export function StoreHeader({ store }: { store: any }) {
               )}
             </Button>
 
-            <Link to="/loja/$slug/carrinho" params={{ slug: store.slug }} className="relative">
+            <Link to="/carrinho" className="relative">
               <Button
                 variant="ghost"
                 size="icon"

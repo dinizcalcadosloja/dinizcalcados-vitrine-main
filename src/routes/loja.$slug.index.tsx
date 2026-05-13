@@ -25,7 +25,7 @@ export const Route = createFileRoute("/loja/$slug/")({
   component: StorefrontPage,
 });
 
-function StorefrontPage() {
+export function StorefrontPage() {
   const store = useStore();
   const [q, setQ] = useState("");
   const [activeDept, setActiveDept] = useState<string | null>(null);
@@ -194,7 +194,7 @@ function StorefrontPage() {
                     key={p.id}
                     className="flex-none w-[46%] sm:w-[45%] md:w-[30%] lg:w-[23%] snap-start"
                   >
-                    <ProductCard p={p} slug={store.slug} />
+                    <ProductCard p={p} />
                   </div>
                 ))}
               </div>
@@ -259,7 +259,7 @@ function StorefrontPage() {
                               key={p.id}
                               className="flex-none w-[46%] sm:w-[45%] md:w-[30%] lg:w-[23%] snap-start"
                             >
-                              <ProductCard p={p} slug={store.slug} />
+                              <ProductCard p={p} />
                             </div>
                           ))}
                         </div>
@@ -316,7 +316,7 @@ function StorefrontPage() {
                 {viewAllCategory &&
                   productsByCategory
                     .get(viewAllCategory.id)
-                    ?.map((p: any) => <ProductCard key={p.id} p={p} slug={store.slug} />)}
+                    ?.map((p: any) => <ProductCard key={p.id} p={p} />)}
               </div>
             </div>
 

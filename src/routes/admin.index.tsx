@@ -79,10 +79,19 @@ function AdminHome() {
         .select("*", { count: "exact", head: true })
         .eq("store_id", store!.id);
 
+      const { data: visitData } = await supabase
+        .from("store_visit_counts")
+        .select("count")
+        .eq("store_id", store!.id)
+        .gte("day", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+
+      const visits = (visitData ?? []).reduce((sum: number, r: any) => sum + (r.count || 0), 0);
+
       return {
         products: productsCount || 0,
         activeProducts: activeProductsCount || 0,
         categories: categoriesCount || 0,
+        visits,
       };
     },
   });
@@ -252,20 +261,15 @@ function AdminHome() {
         <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                <ShoppingBag className="h-5 w-5 text-emerald-600" />
+              <div className="h-10 w-10 bg-indigo-500/10 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+                <Users className="h-5 w-5 text-indigo-600" />
               </div>
-              <Badge
-                variant="outline"
-                className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2 py-0 text-[9px] font-bold"
-              >
-                ATIVOS
-              </Badge>
+              <TrendingUp className="h-4 w-4 text-indigo-400" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-sm font-medium text-muted-foreground">Produtos Visíveis</p>
-              <h3 className="text-2xl font-bold tracking-tight">{stats?.activeProducts || 0}</h3>
-              <p className="text-xs text-muted-foreground/70">de {stats?.products || 0} total</p>
+              <p className="text-sm font-medium text-muted-foreground">Visitas (30 dias)</p>
+              <h3 className="text-2xl font-bold tracking-tight">{stats?.visits || 0}</h3>
+              <p className="text-xs text-muted-foreground/70">acessos à vitrine</p>
             </div>
           </CardContent>
         </Card>
