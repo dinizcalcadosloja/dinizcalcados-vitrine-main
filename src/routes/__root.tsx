@@ -70,29 +70,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "MarianoMensWear - Loja Online" },
-      { name: "description", content: "MarianoMensWear - Loja Online" },
+      {
+        name: "description",
+        content: "Vista sua melhor versão. Moda masculina, perfumaria e acessórios.",
+      },
       { property: "og:title", content: "MarianoMensWear - Loja Online" },
-      { name: "twitter:title", content: "MarianoMensWear - Loja Online" },
       {
         property: "og:description",
-        content: "MarianoMensWear - Loja Online",
+        content: "Vista sua melhor versão. Moda masculina, perfumaria e acessórios.",
       },
-      {
-        name: "twitter:description",
-        content: "MarianoMensWear - Loja Online",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b7c5474a-6b8e-4861-a1af-cd1fefc7ecb6/id-preview-c2ea7d4f--60119d7e-2053-4617-bc21-40e0fde42bcc.lovable.app-1778164135817.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b7c5474a-6b8e-4861-a1af-cd1fefc7ecb6/id-preview-c2ea7d4f--60119d7e-2053-4617-bc21-40e0fde42bcc.lovable.app-1778164135817.png",
-      },
-      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: "https://marianomenswear.com.br/preview.jpg" },
+      { property: "og:url", content: "https://marianomenswear.com.br" },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "MarianoMensWear - Loja Online" },
+      { name: "twitter:description", content: "Vista sua melhor versão." },
+      { name: "twitter:image", content: "https://marianomenswear.com.br/preview.jpg" },
     ],
     links: [
       { rel: "icon", href: "/favicon.png", type: "image/png" },
