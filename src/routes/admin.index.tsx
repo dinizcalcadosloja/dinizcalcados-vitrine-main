@@ -101,7 +101,7 @@ function AdminHome() {
     setBusy(true);
     const fd = new FormData(e.currentTarget);
     const name = String(fd.get("name"));
-    const slug = slugify(String(fd.get("slug") || name));
+    const slug = slugify(name);
     const { data, error } = await supabase
       .from("stores")
       .insert({ owner_id: user!.id, name, slug, whatsapp: String(fd.get("whatsapp") || "") })
@@ -152,24 +152,6 @@ function AdminHome() {
                 />
               </div>
               <div className="space-y-2.5">
-                <Label htmlFor="slug" className="text-sm font-semibold">
-                  URL da sua Vitrine
-                </Label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pr-1 pointer-events-none border-r border-border/40 bg-muted/30 group-focus-within:bg-muted/50 rounded-l-xl transition-colors">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      marianomenswear.app/loja/
-                    </span>
-                  </div>
-                  <Input
-                    id="slug"
-                    name="slug"
-                    placeholder="minha-loja"
-                    className="h-11 pl-[125px] rounded-xl border-border/60"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2.5">
                 <Label htmlFor="whatsapp" className="text-sm font-semibold">
                   WhatsApp para Pedidos
                 </Label>
@@ -212,7 +194,7 @@ function AdminHome() {
             </Badge>
             <a
               className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-              href={`/loja/${store.slug}`}
+              href="https://www.marianomenswear.com.br"
               target="_blank"
               rel="noreferrer"
             >
