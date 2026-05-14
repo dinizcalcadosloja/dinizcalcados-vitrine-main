@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StoreCtx } from "@/lib/store-context";
 import { StoreHeader } from "@/components/store-header";
-import { StorefrontPage } from "./loja.$slug.index";
+import { StorefrontPage } from "@/components/StorefrontPage";
 
 const STORE_SLUG = "marianomenswear";
 

@@ -1,5 +1,13 @@
-import { LayoutGrid, Sparkles, User as UserIcon } from "lucide-react";
+import { ChevronDown, LayoutGrid, Sparkles, User as UserIcon } from "lucide-react";
 import { useMemo, useRef, useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 interface Category {
   id: string;
@@ -22,16 +30,28 @@ export function StoreFilters({
   activeCat,
   setActiveCat,
 }: StoreFiltersProps) {
+  const isMobile = useIsMobile();
   const departments = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
   const subcats = useMemo(
     () => categories.filter((c) => c.parent_id === activeDept),
     [categories, activeDept],
   );
+  const MOBILE_VISIBLE_DEPARTMENTS = 3;
+  const visibleDepartments = useMemo(
+    () => (isMobile ? departments.slice(0, MOBILE_VISIBLE_DEPARTMENTS) : departments),
+    [departments, isMobile],
+  );
+  const hiddenDepartments = useMemo(
+    () => (isMobile ? departments.slice(MOBILE_VISIBLE_DEPARTMENTS) : []),
+    [departments, isMobile],
+  );
+  const hasHiddenDepartments = hiddenDepartments.length > 0;
 
   const deptScrollRef = useRef<HTMLDivElement>(null);
   const catScrollRef = useRef<HTMLDivElement>(null);
 
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isDeptDrawerOpen, setIsDeptDrawerOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,41 +80,60 @@ export function StoreFilters({
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-3 sm:space-y-4 w-full">
         {/* Departments - Pill Tabs */}
-        <div
-          ref={deptScrollRef}
-          className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0"
-        >
-          <button
-            onClick={() => {
-              setActiveDept(null);
-              setActiveCat(null);
-            }}
-            className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-              !activeDept
-                ? "bg-slate-900 text-white shadow-lg shadow-slate-200 scale-105"
-                : "bg-slate-50 text-slate-500 hover:bg-slate-100"
-            }`}
+        <div className="relative">
+          <div
+            ref={deptScrollRef}
+            className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0"
           >
-            <LayoutGrid className="h-4 w-4" />
-            Todos
-          </button>
-          {departments.map((d) => (
             <button
-              key={d.id}
               onClick={() => {
-                setActiveDept(d.id);
+                setActiveDept(null);
                 setActiveCat(null);
               }}
               className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 whitespace-nowrap ${
-                activeDept === d.id
+                !activeDept
                   ? "bg-slate-900 text-white shadow-lg shadow-slate-200 scale-105"
                   : "bg-slate-50 text-slate-500 hover:bg-slate-100"
               }`}
             >
-              {getCategoryIcon(d.name)}
-              {d.name}
+              <LayoutGrid className="h-4 w-4" />
+              Todos
             </button>
-          ))}
+            {visibleDepartments.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => {
+                  setActiveDept(d.id);
+                  setActiveCat(null);
+                }}
+                className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+                  activeDept === d.id
+                    ? "bg-slate-900 text-white shadow-lg shadow-slate-200 scale-105"
+                    : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {getCategoryIcon(d.name)}
+                {d.name}
+              </button>
+            ))}
+
+            {hasHiddenDepartments && (
+              <button
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setIsDeptDrawerOpen(true);
+                }}
+                className="flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold whitespace-nowrap border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              >
+                Mais
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {isMobile && hasHiddenDepartments && (
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white via-white/90 to-transparent" />
+          )}
         </div>
 
         {/* Subcategories - Modern Chips */}
@@ -129,6 +168,52 @@ export function StoreFilters({
           </div>
         )}
       </div>
+
+      <Drawer open={isDeptDrawerOpen} onOpenChange={setIsDeptDrawerOpen}>
+        <DrawerContent className="rounded-t-2xl border-slate-200 bg-white">
+          <DrawerHeader className="text-left">
+            <DrawerTitle className="text-slate-900">Categorias</DrawerTitle>
+            <DrawerDescription>Escolha o departamento para filtrar produtos.</DrawerDescription>
+          </DrawerHeader>
+
+          <div className="max-h-[65vh] overflow-y-auto px-4 pb-6">
+            <div className="grid gap-2">
+              <button
+                onClick={() => {
+                  setActiveDept(null);
+                  setActiveCat(null);
+                  setIsDeptDrawerOpen(false);
+                }}
+                className={`w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-all ${
+                  !activeDept
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                Todos
+              </button>
+
+              {departments.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => {
+                    setActiveDept(d.id);
+                    setActiveCat(null);
+                    setIsDeptDrawerOpen(false);
+                  }}
+                  className={`w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-all ${
+                    activeDept === d.id
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
