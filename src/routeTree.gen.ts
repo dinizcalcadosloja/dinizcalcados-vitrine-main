@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as CarrinhoRouteImport } from './routes/carrinho'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -25,6 +26,11 @@ import { Route as AdminProdutosNovoRouteImport } from './routes/admin.produtos.n
 import { Route as AdminProdutosIdRouteImport } from './routes/admin.produtos.$id'
 import { Route as LojaSlugProdutoProductIdRouteImport } from './routes/loja.$slug.produto.$productId'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CarrinhoRoute = CarrinhoRouteImport.update({
   id: '/carrinho',
   path: '/carrinho',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/carrinho': typeof CarrinhoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/loja': typeof AdminLojaRoute
   '/loja/$slug': typeof LojaSlugRouteWithChildren
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/carrinho': typeof CarrinhoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/loja': typeof AdminLojaRoute
   '/produto/$productId': typeof ProdutoProductIdRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/carrinho': typeof CarrinhoRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/loja': typeof AdminLojaRoute
   '/loja/$slug': typeof LojaSlugRouteWithChildren
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/carrinho'
+    | '/reset-password'
     | '/admin/categorias'
     | '/admin/loja'
     | '/loja/$slug'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/carrinho'
+    | '/reset-password'
     | '/admin/categorias'
     | '/admin/loja'
     | '/produto/$productId'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/carrinho'
+    | '/reset-password'
     | '/admin/categorias'
     | '/admin/loja'
     | '/loja/$slug'
@@ -209,12 +221,20 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   CarrinhoRoute: typeof CarrinhoRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   LojaSlugRoute: typeof LojaSlugRouteWithChildren
   ProdutoProductIdRoute: typeof ProdutoProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/carrinho': {
       id: '/carrinho'
       path: '/carrinho'
@@ -364,6 +384,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   CarrinhoRoute: CarrinhoRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   LojaSlugRoute: LojaSlugRouteWithChildren,
   ProdutoProductIdRoute: ProdutoProductIdRoute,
 }

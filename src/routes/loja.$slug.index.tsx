@@ -158,7 +158,7 @@ export function StorefrontPage() {
             <section className="mb-20">
               <div className="mb-8 flex items-end justify-between px-2 sm:px-0">
                 <div>
-                  <h2 className="text-2xl sm:text-4xl font-black tracking-tighter text-slate-900 uppercase">
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tighter text-slate-900 uppercase">
                     Em Destaque
                   </h2>
                   <div className="h-1.5 w-16 bg-slate-900 mt-2 rounded-full" />
@@ -233,7 +233,7 @@ export function StorefrontPage() {
                     <div key={categoryId}>
                       <div className="mb-8 flex items-end justify-between px-2 sm:px-0">
                         <div>
-                          <h2 className="text-2xl sm:text-4xl font-black tracking-tighter text-slate-900 uppercase">
+                          <h2 className="text-xl sm:text-2xl font-black tracking-tighter text-slate-900 uppercase">
                             {categoryName}
                           </h2>
                           <div className="h-1.5 w-16 bg-slate-900 mt-2 rounded-full" />
