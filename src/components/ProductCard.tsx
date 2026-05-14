@@ -4,13 +4,15 @@ import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/lib/favorites";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/lib/store-context";
 
 interface ProductCardProps {
   p: any;
 }
 
 export function ProductCard({ p }: ProductCardProps) {
-  const { toggle, isFavorite } = useFavorites("marianomenswear");
+  const store = useStore();
+  const { toggle, isFavorite } = useFavorites(store.slug);
   const favorited = isFavorite(p.id);
 
   const cover = p.product_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url;
