@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,10 @@ import {
   TrendingUp,
   Image as ImageIcon,
   LayoutDashboard,
+  CalendarClock,
+  ShieldAlert,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +30,13 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/admin/")({
   component: AdminHome,
 });
+
+const DOMAIN_RENEWAL_MONTH = 4;
+const DOMAIN_RENEWAL_DAY = 11;
+
+function getRenewalReminderStorageKey(year: number) {
+  return `domain-renewal-reminder-dismissed:${year}`;
+}
 
 function slugify(s: string) {
   return s
@@ -41,6 +52,8 @@ function AdminHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [isRenewalReminderDismissed, setIsRenewalReminderDismissed] = useState(false);
+  const [isRenewalReminderExpanded, setIsRenewalReminderExpanded] = useState(false);
 
   const {
     data: store,
@@ -113,6 +126,42 @@ function AdminHome() {
     await refetch();
     navigate({ to: "/admin/loja" });
     void data;
+  }
+
+  const domainRenewalReminder = useMemo(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const renewalDate = new Date(currentYear, DOMAIN_RENEWAL_MONTH, DOMAIN_RENEWAL_DAY);
+    renewalDate.setHours(0, 0, 0, 0);
+
+    const todayAtMidnight = new Date(today);
+    todayAtMidnight.setHours(0, 0, 0, 0);
+
+    return {
+      year: currentYear,
+      renewalDate,
+      shouldShow: todayAtMidnight >= renewalDate,
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!domainRenewalReminder.shouldShow || typeof window === "undefined") {
+      setIsRenewalReminderDismissed(false);
+      return;
+    }
+
+    const dismissed =
+      window.localStorage.getItem(getRenewalReminderStorageKey(domainRenewalReminder.year)) ===
+      "true";
+    setIsRenewalReminderDismissed(dismissed);
+  }, [domainRenewalReminder]);
+
+  function dismissRenewalReminder() {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(getRenewalReminderStorageKey(domainRenewalReminder.year), "true");
+    }
+    setIsRenewalReminderDismissed(true);
+    toast.success("Lembrete anual de renovacao dispensado por este ano.");
   }
 
   if (isLoading) return null;
@@ -209,6 +258,77 @@ function AdminHome() {
           </Link>
         </Button>
       </div>
+
+      {domainRenewalReminder.shouldShow &&
+        !isRenewalReminderDismissed &&
+        (isRenewalReminderExpanded ? (
+          <Card className="border-amber-200 bg-gradient-to-r from-amber-50 via-white to-orange-50 shadow-sm">
+            <CardContent className="p-3 sm:p-4">
+              <>
+                <div className="flex items-start gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsRenewalReminderExpanded(false)}
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 transition-colors hover:bg-amber-200"
+                    aria-label="Recolher lembrete de renovacao do dominio"
+                  >
+                    <ShieldAlert className="h-6 w-6" />
+                  </button>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
+                        Lembrete de renovacao do dominio
+                      </h2>
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                        Todo ano em 11/05
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 rounded-full px-3 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+                        onClick={() => setIsRenewalReminderExpanded(false)}
+                      >
+                        Recolher
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-slate-600">
+                      Verifique a renovacao do dominio da loja para evitar indisponibilidade do
+                      site.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-amber-200">
+                        <CalendarClock className="h-3.5 w-3.5 text-amber-700" />
+                        Revisao anual: 11/05/{domainRenewalReminder.year}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2 sm:max-w-[220px]">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl border-amber-200 bg-white hover:bg-amber-50"
+                    onClick={dismissRenewalReminder}
+                  >
+                    Dispensar este ano
+                  </Button>
+                </div>
+              </>
+            </CardContent>
+          </Card>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsRenewalReminderExpanded(true)}
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 transition-colors hover:bg-amber-200"
+            aria-label="Expandir lembrete de renovacao do dominio"
+          >
+            <ShieldAlert className="h-6 w-6" />
+          </button>
+        ))}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300">
