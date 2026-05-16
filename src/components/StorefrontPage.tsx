@@ -131,7 +131,7 @@ export function StorefrontPage() {
           {/* Search Bar - Pill Style */}
           <div className="max-w-2xl mx-auto mb-10 sm:mb-16 w-full">
             <div className="relative group w-full">
-              <div className="absolute inset-0 bg-emerald-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-emerald-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
               <Input
                 value={q}
