@@ -132,15 +132,15 @@ export function StorefrontPage() {
           <div className="max-w-2xl mx-auto mb-10 sm:mb-16 w-full">
             <div className="relative group w-full">
               <div className="absolute inset-0 bg-emerald-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+              <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors pointer-events-none z-[2]" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="O que você está procurando hoje?"
-                className="h-14 sm:h-16 pl-14 pr-6 rounded-full border-slate-100 bg-white shadow-sm hover:shadow-md focus:shadow-xl focus:ring-slate-900 transition-all text-base sm:text-lg placeholder:text-slate-400 border-none"
+                className="relative z-[1] h-14 sm:h-16 pl-14 pr-6 rounded-full border-slate-100 bg-white shadow-sm hover:shadow-md focus:shadow-xl focus:ring-slate-900 transition-all text-base sm:text-lg placeholder:text-slate-400 border-none"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <button className="hidden sm:flex bg-slate-900 text-white px-6 py-2 rounded-full hover:bg-slate-800 transition-colors font-bold text-sm h-10 items-center">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-[2]">
+                <button className="hidden sm:flex bg-slate-900 text-white px-6 py-2 rounded-full hover:bg-slate-800 transition-colors font-bold text-sm h-10 items-center pointer-events-auto">
                   Buscar
                 </button>
               </div>
