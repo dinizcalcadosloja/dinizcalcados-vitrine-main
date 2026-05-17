@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StoreCtx } from "@/lib/store-context";
 import { StoreHeader } from "@/components/store-header";
 import { StorefrontPage } from "@/components/StorefrontPage";
+import { trackVisit } from "@/lib/analytics";
 
 const STORE_SLUG = "marianomenswear";
 
@@ -37,6 +38,7 @@ function StoreRoot() {
     if (store && !recorded.current) {
       recorded.current = true;
       supabase.rpc("increment_store_visit", { p_store_id: store.id }).then(() => {});
+      trackVisit(store.id);
     }
   }, [store]);
 

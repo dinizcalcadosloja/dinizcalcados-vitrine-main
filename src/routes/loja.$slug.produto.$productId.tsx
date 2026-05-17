@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { trackProductView } from "@/lib/analytics";
+
 export const Route = createFileRoute("/loja/$slug/produto/$productId")({
   component: ProductPage,
 });
@@ -49,7 +51,9 @@ function ProductPage() {
     () => (product?.product_images ?? []).sort((a: any, b: any) => a.position - b.position),
     [product],
   );
-  const variants: any[] = product?.product_variants ?? [];
+  const variants: any[] = (product?.product_variants ?? []).filter(
+    (v: any) => v.is_active !== false,
+  );
   const hasVariations = product?.has_variations;
   const variantsAvailable = hasVariations && variants.length > 0;
   const colorImageMap = useMemo(() => {
@@ -78,6 +82,13 @@ function ProductPage() {
   useEffect(() => {
     setImgIdx(0);
   }, [selectedColor]);
+
+  // Track product view
+  useEffect(() => {
+    if (store?.id && productId) {
+      trackProductView(store.id, productId);
+    }
+  }, [store?.id, productId]);
 
   // Distinct colors with stock info
   const colors = useMemo(() => {
@@ -108,7 +119,7 @@ function ProductPage() {
     return list
       .map((v) => ({
         key: v.id,
-        label: v.size || v.numbering || "Único",
+        label: v.size || v.numbering,
       }))
       .filter((s) => s.label);
   }, [variants, selectedColor, hasColors]);
@@ -269,16 +280,22 @@ function ProductPage() {
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">{product.name}</h1>
           <div className="mt-3 flex flex-col gap-1">
-            {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground line-through decoration-muted-foreground/50">
-                  {formatBRL(Number(product.compare_at_price))}
-                </span>
-                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">
-                  {Math.round(((Number(product.compare_at_price) - Number(product.price)) / Number(product.compare_at_price)) * 100)}% OFF
-                </span>
-              </div>
-            )}
+            {product.compare_at_price &&
+              Number(product.compare_at_price) > Number(product.price) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground line-through decoration-muted-foreground/50">
+                    {formatBRL(Number(product.compare_at_price))}
+                  </span>
+                  <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">
+                    {Math.round(
+                      ((Number(product.compare_at_price) - Number(product.price)) /
+                        Number(product.compare_at_price)) *
+                        100,
+                    )}
+                    % OFF
+                  </span>
+                </div>
+              )}
             <span className="text-3xl font-bold text-foreground">
               {formatBRL(Number(product.price))}
             </span>
@@ -357,18 +374,11 @@ function ProductPage() {
           )}
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button 
-              onClick={() => addToCart()} 
-              variant="outline" 
-              className="flex-1"
-            >
-              <ShoppingBag className="mr-2 h-4 w-4" /> 
+            <Button onClick={() => addToCart()} variant="outline" className="flex-1">
+              <ShoppingBag className="mr-2 h-4 w-4" />
               Adicionar
             </Button>
-            <Button 
-              onClick={buyNow} 
-              className="flex-1 bg-[#25D366] hover:bg-[#1ebd5b]"
-            >
+            <Button onClick={buyNow} className="flex-1 bg-[#25D366] hover:bg-[#1ebd5b]">
               <MessageCircle className="mr-2 h-4 w-4" /> Comprar agora
             </Button>
           </div>

@@ -19,6 +19,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { trackProductView } from "@/lib/analytics";
+
 const STORE_SLUG = "marianomenswear";
 
 export const Route = createFileRoute("/produto/$productId")({
@@ -95,7 +97,9 @@ function ProductContent() {
     () => (product?.product_images ?? []).sort((a: any, b: any) => a.position - b.position),
     [product],
   );
-  const variants: any[] = product?.product_variants ?? [];
+  const variants: any[] = (product?.product_variants ?? []).filter(
+    (v: any) => v.is_active !== false,
+  );
   const hasVariations = product?.has_variations;
   const colorImageMap = useMemo(() => {
     const m = new Map<string, string[]>();
@@ -121,6 +125,13 @@ function ProductContent() {
   useEffect(() => {
     setImgIdx(0);
   }, [selectedColor]);
+
+  // Track product view
+  useEffect(() => {
+    if (store?.id && productId) {
+      trackProductView(store.id, productId);
+    }
+  }, [store?.id, productId]);
 
   const colors = useMemo(() => {
     const map = new Map<string, { color: string }>();
@@ -148,7 +159,7 @@ function ProductContent() {
     return list
       .map((v) => ({
         key: v.id,
-        label: v.size || v.numbering || "Único",
+        label: v.size || v.numbering,
       }))
       .filter((s) => s.label);
   }, [variants, selectedColor, hasColors]);

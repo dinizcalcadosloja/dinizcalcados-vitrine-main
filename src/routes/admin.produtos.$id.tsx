@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/produtos/$id")({
   component: ProductEditor,
@@ -62,6 +63,7 @@ function ProductEditor() {
   const [images, setImages] = useState<string[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [colorImages, setColorImages] = useState<Record<string, string[]>>({});
+  const [colorActive, setColorActive] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
@@ -149,6 +151,13 @@ function ProductEditor() {
         ci[c.color] = ci[c.color] ? [...ci[c.color], c.image_url] : [c.image_url];
       }
       setColorImages(ci);
+
+      const ca: Record<string, boolean> = {};
+      for (const v of (product.product_variants ?? []) as any[]) {
+        const c = (v.color ?? "").trim();
+        if (c && !(c in ca)) ca[c] = v.is_active ?? true;
+      }
+      setColorActive(ca);
     }
   }, [product]);
 
@@ -204,6 +213,7 @@ function ProductEditor() {
           size: v.size || null,
           color: v.color || null,
           numbering: v.numbering || null,
+          is_active: colorActive[(v.color ?? "").trim()] ?? true,
         })),
       );
 
@@ -290,6 +300,7 @@ function ProductEditor() {
           size: v.size || null,
           color: v.color || null,
           numbering: v.numbering || null,
+          is_active: colorActive[(v.color ?? "").trim()] ?? true,
         })),
       );
     }
@@ -447,6 +458,8 @@ function ProductEditor() {
                   setVariants={setVariants}
                   colorImages={colorImages}
                   setColorImages={setColorImages}
+                  colorActive={colorActive}
+                  setColorActive={setColorActive}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground italic">
@@ -599,18 +612,22 @@ function ProductEditor() {
   );
 }
 
-const COMMON_SIZES = ["PP", "P", "M", "G", "GG", "XG"];
+const COMMON_SIZES = ["PP", "P", "M", "G", "GG", "XG", "Único"];
 
 function VariantsEditor({
   variants,
   setVariants,
   colorImages,
   setColorImages,
+  colorActive,
+  setColorActive,
 }: {
   variants: Variant[];
   setVariants: (v: Variant[]) => void;
   colorImages: Record<string, string[]>;
   setColorImages: (v: Record<string, string[]>) => void;
+  colorActive: Record<string, boolean>;
+  setColorActive: (v: Record<string, boolean>) => void;
 }) {
   const [newColorAdded, setNewColorAdded] = useState<string | null>(null);
   const colorRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -620,7 +637,7 @@ function VariantsEditor({
 
   useEffect(() => {
     if (newColorAdded && colorRefs.current[newColorAdded]) {
-      colorRefs.current[newColorAdded]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      colorRefs.current[newColorAdded]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       const input = colorRefs.current[newColorAdded]?.querySelector("input");
       if (input) (input as HTMLInputElement).focus();
       setNewColorAdded(null);
@@ -630,7 +647,8 @@ function VariantsEditor({
   function addColor(name: string) {
     const color = name.trim();
     if (!color || colors.includes(color)) return;
-    setVariants([...variants, { size: "", color, numbering: "" }]);
+    setVariants([{ size: "", color, numbering: "" }, ...variants]);
+    setColorActive({ ...colorActive, [color]: true });
     setNewColorAdded(color);
   }
 
@@ -639,6 +657,9 @@ function VariantsEditor({
     const nextImages = { ...colorImages };
     delete nextImages[color];
     setColorImages(nextImages);
+    const nextActive = { ...colorActive };
+    delete nextActive[color];
+    setColorActive(nextActive);
   }
 
   function renameColor(oldName: string, newName: string) {
@@ -652,6 +673,17 @@ function VariantsEditor({
       delete nextImages[oldName];
       setColorImages(nextImages);
     }
+
+    const nextActive = { ...colorActive };
+    if (oldName in nextActive) {
+      nextActive[next] = nextActive[oldName];
+      delete nextActive[oldName];
+    }
+    setColorActive(nextActive);
+  }
+
+  function toggleColorActive(color: string, active: boolean) {
+    setColorActive({ ...colorActive, [color]: active });
   }
 
   function updateRow(target: Variant, patch: Partial<Variant>) {
@@ -700,7 +732,10 @@ function VariantsEditor({
               ref={(el) => {
                 colorRefs.current[color] = el;
               }}
-              className="rounded-xl border border-border bg-card overflow-hidden"
+              className={cn(
+                "rounded-xl border border-border bg-card overflow-hidden transition-opacity",
+                colorActive[color] === false && "opacity-50",
+              )}
             >
               <div className="p-4 border-b border-border bg-muted/30">
                 <div className="flex items-center justify-between gap-2">
@@ -714,16 +749,27 @@ function VariantsEditor({
                       onBlur={(e) => renameColor(color, e.target.value)}
                       className="h-8 max-w-[200px] font-bold bg-transparent border-none focus-visible:ring-0 px-0 text-base"
                     />
+                    {colorActive[color] === false && (
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        Inativo
+                      </Badge>
+                    )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeColor(color)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={colorActive[color] !== false}
+                      onCheckedChange={(checked) => toggleColorActive(color, checked)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeColor(color)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 

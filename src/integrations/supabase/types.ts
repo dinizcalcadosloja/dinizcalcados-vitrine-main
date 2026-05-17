@@ -122,6 +122,7 @@ export type Database = {
           color: string | null;
           created_at: string;
           id: string;
+          is_active: boolean;
           numbering: string | null;
           product_id: string;
           size: string | null;
@@ -132,6 +133,7 @@ export type Database = {
           color?: string | null;
           created_at?: string;
           id?: string;
+          is_active?: boolean;
           numbering?: string | null;
           product_id: string;
           size?: string | null;
@@ -142,6 +144,7 @@ export type Database = {
           color?: string | null;
           created_at?: string;
           id?: string;
+          is_active?: boolean;
           numbering?: string | null;
           product_id?: string;
           size?: string | null;

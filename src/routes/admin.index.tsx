@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { TopProductsCard } from "@/components/admin/TopProductsCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -92,19 +93,10 @@ function AdminHome() {
         .select("*", { count: "exact", head: true })
         .eq("store_id", store!.id);
 
-      const { data: visitData } = await supabase
-        .from("store_visit_counts")
-        .select("count")
-        .eq("store_id", store!.id)
-        .gte("day", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
-
-      const visits = (visitData ?? []).reduce((sum: number, r: any) => sum + (r.count || 0), 0);
-
       return {
         products: productsCount || 0,
         activeProducts: activeProductsCount || 0,
         categories: categoriesCount || 0,
-        visits,
       };
     },
   });
@@ -331,50 +323,40 @@ function AdminHome() {
         ))}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Package className="h-5 w-5 text-primary" />
+        <Link to="/admin/produtos" className="block">
+          <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300 cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Package className="h-5 w-5 text-primary" />
+                </div>
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
               </div>
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium text-muted-foreground">Total de Produtos</p>
-              <h3 className="text-2xl font-bold tracking-tight">{stats?.products || 0}</h3>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-muted-foreground">Total de Produtos</p>
+                <h3 className="text-2xl font-bold tracking-tight">{stats?.products || 0}</h3>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-10 w-10 bg-amber-500/10 rounded-xl flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
-                <Tags className="h-5 w-5 text-amber-600" />
+        <Link to="/admin/categorias" className="block">
+          <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300 cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-10 w-10 bg-amber-500/10 rounded-xl flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                  <Tags className="h-5 w-5 text-amber-600" />
+                </div>
               </div>
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium text-muted-foreground">Categorias Ativas</p>
-              <h3 className="text-2xl font-bold tracking-tight">{stats?.categories || 0}</h3>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-muted-foreground">Categorias Ativas</p>
+                <h3 className="text-2xl font-bold tracking-tight">{stats?.categories || 0}</h3>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-border/60 shadow-sm overflow-hidden group hover:border-primary/30 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="h-10 w-10 bg-indigo-500/10 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
-                <Users className="h-5 w-5 text-indigo-600" />
-              </div>
-              <TrendingUp className="h-4 w-4 text-indigo-400" />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium text-muted-foreground">Visitas (30 dias)</p>
-              <h3 className="text-2xl font-bold tracking-tight">{stats?.visits || 0}</h3>
-              <p className="text-xs text-muted-foreground/70">acessos à vitrine</p>
-            </div>
-          </CardContent>
-        </Card>
+        <TopProductsCard storeId={store.id} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

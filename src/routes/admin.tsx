@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Settings,
   ChevronRight,
+  BarChart2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,7 @@ function AdminLayout() {
     { to: "/admin/produtos", label: "Produtos", icon: Package },
     { to: "/admin/categorias", label: "Categorias", icon: Tags },
     { to: "/admin/loja", label: "Configurações", icon: Settings },
+    { to: "/admin/analytics", label: "Analytics", icon: BarChart2 },
   ];
 
   const SidebarContent = () => (

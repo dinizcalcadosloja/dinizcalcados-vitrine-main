@@ -20,6 +20,7 @@ import { Route as ProdutoProductIdRouteImport } from './routes/produto.$productI
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as AdminLojaRouteImport } from './routes/admin.loja'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as LojaSlugIndexRouteImport } from './routes/loja.$slug.index'
 import { Route as AdminProdutosIndexRouteImport } from './routes/admin.produtos.index'
 import { Route as LojaSlugCarrinhoRouteImport } from './routes/loja.$slug.carrinho'
@@ -82,6 +83,11 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
 const LojaSlugIndexRoute = LojaSlugIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/carrinho': typeof CarrinhoRoute
   '/favoritos': typeof FavoritosRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/loja': typeof AdminLojaRoute
   '/loja/$slug': typeof LojaSlugRouteWithChildren
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/carrinho': typeof CarrinhoRoute
   '/favoritos': typeof FavoritosRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/loja': typeof AdminLojaRoute
   '/produto/$productId': typeof ProdutoProductIdRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/carrinho': typeof CarrinhoRoute
   '/favoritos': typeof FavoritosRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/loja': typeof AdminLojaRoute
   '/loja/$slug': typeof LojaSlugRouteWithChildren
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/carrinho'
     | '/favoritos'
     | '/reset-password'
+    | '/admin/analytics'
     | '/admin/categorias'
     | '/admin/loja'
     | '/loja/$slug'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/carrinho'
     | '/favoritos'
     | '/reset-password'
+    | '/admin/analytics'
     | '/admin/categorias'
     | '/admin/loja'
     | '/produto/$productId'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/carrinho'
     | '/favoritos'
     | '/reset-password'
+    | '/admin/analytics'
     | '/admin/categorias'
     | '/admin/loja'
     | '/loja/$slug'
@@ -318,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/loja/$slug/': {
       id: '/loja/$slug/'
       path: '/'
@@ -364,6 +383,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCategoriasRoute: typeof AdminCategoriasRoute
   AdminLojaRoute: typeof AdminLojaRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -373,6 +393,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCategoriasRoute: AdminCategoriasRoute,
   AdminLojaRoute: AdminLojaRoute,
   AdminIndexRoute: AdminIndexRoute,

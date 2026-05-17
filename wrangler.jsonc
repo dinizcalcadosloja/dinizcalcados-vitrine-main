@@ -8,4 +8,11 @@
     { "pattern": "marianomenswear.com.br", "custom_domain": true },
     { "pattern": "www.marianomenswear.com.br", "custom_domain": true },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "ANALYTICS_KV",
+      "id": "297a9c380f3241ff8069a706b4ad54ee",
+      "preview_id": "REPLACE_WITH_YOUR_KV_PREVIEW_NAMESPACE_ID",
+    },
+  ],
 }
