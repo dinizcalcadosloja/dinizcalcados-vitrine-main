@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo, useRef } from "react";
 import { useStore } from "@/lib/store-context";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Search,
@@ -128,22 +127,16 @@ export function StorefrontPage() {
         />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
-          {/* Search Bar - Pill Style */}
+          {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-10 sm:mb-16 w-full">
-            <div className="relative group w-full">
-              <div className="absolute inset-0 bg-emerald-500/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors pointer-events-none z-[2]" />
-              <Input
+            <div className="flex items-center gap-2 h-14 sm:h-16 bg-white rounded-full shadow-sm border border-slate-100 px-5 focus-within:shadow-xl focus-within:border-slate-300 transition-all">
+              <Search className="h-5 w-5 text-slate-400 shrink-0" />
+              <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="O que você está procurando hoje?"
-                className="relative z-[1] h-14 sm:h-16 pl-14 pr-6 rounded-full border-slate-100 bg-white shadow-sm hover:shadow-md focus:shadow-xl focus:ring-slate-900 transition-all text-base sm:text-lg placeholder:text-slate-400 border-none"
+                className="flex-1 bg-transparent outline-none text-base sm:text-lg placeholder:text-slate-400 text-slate-900 min-w-0"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-[2]">
-                <button className="hidden sm:flex bg-slate-900 text-white px-6 py-2 rounded-full hover:bg-slate-800 transition-colors font-bold text-sm h-10 items-center pointer-events-auto">
-                  Buscar
-                </button>
-              </div>
             </div>
           </div>
 
