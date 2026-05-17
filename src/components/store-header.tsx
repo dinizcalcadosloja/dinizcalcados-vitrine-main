@@ -1,8 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useFavorites } from "@/lib/favorites";
-import { ShoppingBag, Info, MessageCircle, MapPin, Instagram, Heart, Search, X } from "lucide-react";
+import { ShoppingBag, Info, MessageCircle, MapPin, Instagram, Heart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +14,6 @@ import { Button } from "@/components/ui/button";
 export function StoreHeader({ store }: { store: any }) {
   const { count: cartCount } = useCart(store.slug);
   const { count: favCount } = useFavorites(store.slug);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQ, setSearchQ] = useState("");
 
   function openWhatsApp() {
     if (!store.whatsapp) return;
@@ -64,32 +61,6 @@ export function StoreHeader({ store }: { store: any }) {
 
             {/* Right Icons */}
             <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
-              {searchOpen ? (
-                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-3 h-10 sm:h-11 shadow-sm">
-                  <Search className="h-4 w-4 text-slate-400 shrink-0" />
-                  <input
-                    autoFocus
-                    value={searchQ}
-                    onChange={(e) => setSearchQ(e.target.value)}
-                    placeholder="Pesquisar..."
-                    className="bg-transparent outline-none text-sm text-slate-900 placeholder:text-slate-400 w-36 sm:w-48"
-                  />
-                  <button onClick={() => { setSearchOpen(false); setSearchQ(""); }} className="text-slate-400 hover:text-slate-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSearchOpen(true)}
-                  className="rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 sm:h-11 sm:w-11 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
-                  title="Pesquisar"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-              )}
-
               {store.instagram && (
                 <Button
                   variant="ghost"
