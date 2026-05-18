@@ -58,6 +58,28 @@ function AdminLayout() {
     );
   }
 
+  // Atualiza favicon com o logo da loja
+  if (store?.logo_url) {
+    const setFavicon = (url: string) => {
+      let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = url;
+      link.type = "image/png";
+      let apple = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
+      if (!apple) {
+        apple = document.createElement("link");
+        apple.rel = "apple-touch-icon";
+        document.head.appendChild(apple);
+      }
+      apple.href = url;
+    };
+    setFavicon(store.logo_url);
+  }
+
   const items = [
     { to: "/admin", label: "Painel", icon: LayoutDashboard, exact: true },
     { to: "/admin/produtos", label: "Produtos", icon: Package },

@@ -40,6 +40,24 @@ function StoreRoot() {
       supabase.rpc("increment_store_visit", { p_store_id: store.id }).then(() => {});
       trackVisit(store.id);
     }
+    if (store?.logo_url) {
+      let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+      link.href = store.logo_url;
+      link.type = "image/png";
+      let apple = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
+      if (!apple) {
+        apple = document.createElement("link");
+        apple.rel = "apple-touch-icon";
+        document.head.appendChild(apple);
+      }
+      apple.href = store.logo_url;
+      if (store.name) document.title = `${store.name} - Loja Online`;
+    }
   }, [store]);
 
   if (isLoading)
