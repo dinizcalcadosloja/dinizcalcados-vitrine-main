@@ -11,9 +11,6 @@ import { ImageUpload } from "@/components/image-upload";
 import { toast } from "sonner";
 import { CalendarClock, ChevronDown, ChevronUp, ShieldAlert } from "lucide-react";
 
-const DOMAIN_RENEWAL_MONTH = 4;
-const DOMAIN_RENEWAL_DAY = 11;
-
 export const Route = createFileRoute("/admin/loja")({
   component: StoreSettings,
 });
@@ -40,20 +37,27 @@ function StoreSettings() {
   }, [store]);
 
   const domainRenewalInfo = useMemo(() => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const renewalDate = new Date(currentYear, DOMAIN_RENEWAL_MONTH, DOMAIN_RENEWAL_DAY);
-    renewalDate.setHours(0, 0, 0, 0);
+    const raw = form?.domain_created_at;
+    if (!raw) return null;
 
-    const todayAtMidnight = new Date(today);
-    todayAtMidnight.setHours(0, 0, 0, 0);
+    const created = new Date(raw + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // próxima renovação = mesmo dia/mês do ano seguinte
+    const next = new Date(created);
+    next.setFullYear(today.getFullYear());
+    if (next <= today) next.setFullYear(today.getFullYear() + 1);
+    next.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.ceil((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     return {
-      year: currentYear,
-      shouldReview: todayAtMidnight >= renewalDate,
-      formattedDate: `${String(DOMAIN_RENEWAL_DAY).padStart(2, "0")}/${String(DOMAIN_RENEWAL_MONTH + 1).padStart(2, "0")}/${currentYear}`,
+      shouldReview: diffDays <= 30,
+      diffDays,
+      formattedDate: next.toLocaleDateString("pt-BR"),
     };
-  }, []);
+  }, [form?.domain_created_at]);
 
   if (!form) return <p className="text-muted-foreground">Carregando…</p>;
 
@@ -106,6 +110,7 @@ function StoreSettings() {
         city: form.city,
         state: form.state,
         zip_code: form.zip_code,
+        domain_created_at: (form.domain_created_at ?? null) as string | null,
       })
       .eq("id", form.id);
     if (error) toast.error(error.message);
@@ -147,23 +152,29 @@ function StoreSettings() {
                   </Button>
                 </div>
                 <p className="text-sm text-slate-600">
-                  O dominio desta loja deve ser revisado anualmente para renovacao no dia 11/05.
+                  {domainRenewalInfo
+                    ? "Renovação anual do domínio desta loja."
+                    : "Informe a data de criação do domínio para acompanhar a renovação."}
                 </p>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-amber-200">
-                    <CalendarClock className="h-3.5 w-3.5 text-amber-700" />
-                    Proxima verificacao: {domainRenewalInfo.formattedDate}
-                  </span>
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 ${
-                      domainRenewalInfo.shouldReview
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-emerald-100 text-emerald-800"
-                    }`}
-                  >
-                    {domainRenewalInfo.shouldReview ? "Revisar neste periodo" : "Dentro do prazo"}
-                  </span>
-                </div>
+                {domainRenewalInfo && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-amber-200">
+                      <CalendarClock className="h-3.5 w-3.5 text-amber-700" />
+                      Próxima renovação: {domainRenewalInfo.formattedDate}
+                    </span>
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 ${
+                        domainRenewalInfo.shouldReview
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-emerald-100 text-emerald-800"
+                      }`}
+                    >
+                      {domainRenewalInfo.shouldReview
+                        ? `Renovar em ${domainRenewalInfo.diffDays} dia(s)`
+                        : "Dentro do prazo"}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -279,6 +290,17 @@ function StoreSettings() {
             value={form.theme_color ?? "#0f172a"}
             onChange={(e) => setForm({ ...form, theme_color: e.target.value })}
           />
+        </div>
+        <div className="space-y-2">
+          <Label>Data de criação do domínio</Label>
+          <Input
+            type="date"
+            value={form.domain_created_at ?? ""}
+            onChange={(e) => setForm({ ...form, domain_created_at: e.target.value || null })}
+          />
+          <p className="text-xs text-muted-foreground">
+            A próxima renovação será calculada automaticamente como 1 ano após essa data.
+          </p>
         </div>
         <Button type="submit">Salvar alterações</Button>
       </form>

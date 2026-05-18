@@ -21,7 +21,7 @@ import {
 
 import { trackProductView } from "@/lib/analytics";
 
-const STORE_SLUG = "marianomenswear";
+const STORE_SLUG = "anaisa-store";
 
 export const Route = createFileRoute("/produto/$productId")({
   component: ProdutoRoot,

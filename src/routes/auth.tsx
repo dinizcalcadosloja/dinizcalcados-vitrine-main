@@ -148,9 +148,7 @@ function AuthPage() {
               MM
             </span>
           </div>
-          <h1 style={{ color: "#fff", fontSize: 22, fontWeight: 700, margin: 0 }}>
-            Mariano Mens Wear
-          </h1>
+          <h1 style={{ color: "#fff", fontSize: 22, fontWeight: 700, margin: 0 }}>Anaisa Store</h1>
           <p style={{ color: "#666", fontSize: 13, marginTop: 6 }}>Painel administrativo</p>
         </div>
 
@@ -397,7 +395,7 @@ function AuthPage() {
         </div>
 
         <p style={{ textAlign: "center", marginTop: 24, fontSize: 12, color: GOLD }}>
-          Mariano Mens Wear © {new Date().getFullYear()}
+          Anaisa Store © {new Date().getFullYear()}
         </p>
       </div>
 

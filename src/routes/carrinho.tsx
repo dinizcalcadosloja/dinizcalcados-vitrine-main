@@ -9,7 +9,7 @@ import { formatBRL } from "@/lib/format";
 import { Minus, Plus, Trash2, MessageCircle, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
-const STORE_SLUG = "marianomenswear";
+const STORE_SLUG = "anaisa-store";
 
 export const Route = createFileRoute("/carrinho")({
   component: CarrinhoRoot,

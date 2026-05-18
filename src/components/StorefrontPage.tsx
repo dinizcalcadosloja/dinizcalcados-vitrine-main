@@ -15,7 +15,6 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProductCard } from "@/components/ProductCard";
 import { StoreBanner } from "@/components/StoreBanner";
-import { ShippingBanner } from "@/components/ShippingBanner";
 import { StoreFilters } from "@/components/StoreFilters";
 
 export function StorefrontPage() {
@@ -59,9 +58,10 @@ export function StorefrontPage() {
       (
         await supabase
           .from("categories")
-          .select("id,name,parent_id")
+          .select("id,name,parent_id,position")
           .eq("store_id", store.id)
-          .order("position")
+          .order("position", { ascending: true })
+          .order("name", { ascending: true })
       ).data ?? [],
   });
 
@@ -115,7 +115,6 @@ export function StorefrontPage() {
   return (
     <div className="min-h-screen bg-slate-50/30 pb-20 font-sans overflow-x-hidden w-full">
       <main className="w-full">
-        <ShippingBanner />
         <StoreBanner />
 
         <StoreFilters

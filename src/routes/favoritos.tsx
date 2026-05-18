@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 
-const STORE_SLUG = "marianomenswear";
+const STORE_SLUG = "anaisa-store";
 
 export const Route = createFileRoute("/favoritos")({
   component: FavoritosRoot,

@@ -146,8 +146,8 @@ export function StoreFilters({
               onClick={() => setActiveCat(null)}
               className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
                 !activeCat
-                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                  ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200 scale-105"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
               }`}
             >
               Todas Categorias
@@ -158,8 +158,8 @@ export function StoreFilters({
                 onClick={() => setActiveCat(c.id)}
                 className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
                   activeCat === c.id
-                    ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                    ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200 scale-105"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
                 }`}
               >
                 {c.name}

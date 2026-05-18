@@ -7,7 +7,7 @@ import { StoreHeader } from "@/components/store-header";
 import { StorefrontPage } from "@/components/StorefrontPage";
 import { trackVisit } from "@/lib/analytics";
 
-const STORE_SLUG = "marianomenswear";
+const STORE_SLUG = "anaisa-store";
 
 export const Route = createFileRoute("/")({
   component: StoreRoot,

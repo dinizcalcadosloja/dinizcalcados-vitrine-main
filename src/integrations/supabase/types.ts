@@ -244,6 +244,7 @@ export type Database = {
           theme_color: string | null;
           whatsapp: string | null;
           zip_code: string | null;
+          domain_created_at: string | null;
         };
         Insert: {
           address?: string | null;
@@ -261,6 +262,7 @@ export type Database = {
           theme_color?: string | null;
           whatsapp?: string | null;
           zip_code?: string | null;
+          domain_created_at?: string | null;
         };
         Update: {
           address?: string | null;
@@ -278,6 +280,7 @@ export type Database = {
           theme_color?: string | null;
           whatsapp?: string | null;
           zip_code?: string | null;
+          domain_created_at?: string | null;
         };
         Relationships: [];
       };

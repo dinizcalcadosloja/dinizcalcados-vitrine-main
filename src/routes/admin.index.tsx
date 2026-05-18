@@ -114,10 +114,15 @@ function AdminHome() {
       .single();
     setBusy(false);
     if (error) return toast.error(error.message);
+
+    // Atribui papel de admin ao criador da loja
+    await supabase
+      .from("user_roles")
+      .insert({ user_id: user!.id, store_id: data.id, role: "admin" });
+
     toast.success("Loja criada!");
     await refetch();
     navigate({ to: "/admin/loja" });
-    void data;
   }
 
   const domainRenewalReminder = useMemo(() => {
@@ -235,11 +240,11 @@ function AdminHome() {
             </Badge>
             <a
               className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-              href="https://www.marianomenswear.com.br"
+              href="https://www.anaisastore.com.br"
               target="_blank"
               rel="noreferrer"
             >
-              www.marianomenswear.com.br
+              www.anaisastore.com.br
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
@@ -272,7 +277,7 @@ function AdminHome() {
                         Lembrete de renovacao do dominio
                       </h2>
                       <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-                        Todo ano em 11/05
+                        Todo ano em 18/05
                       </Badge>
                       <Button
                         type="button"
@@ -292,7 +297,7 @@ function AdminHome() {
                     <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-amber-200">
                         <CalendarClock className="h-3.5 w-3.5 text-amber-700" />
-                        Revisao anual: 11/05/{domainRenewalReminder.year}
+                        Revisao anual: 18/05/{domainRenewalReminder.year}
                       </span>
                     </div>
                   </div>

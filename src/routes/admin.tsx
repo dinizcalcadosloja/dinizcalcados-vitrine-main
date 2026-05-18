@@ -70,13 +70,19 @@ function AdminLayout() {
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center px-6">
         <Link to="/admin" className="flex items-center gap-3 group">
-          <img
-            src="https://dhpsrhbxhaaprmotbabb.supabase.co/storage/v1/object/public/store-assets/923a30da-db7d-469e-bc36-511e4b0f2df5.png"
-            alt="Mariano Mens Wear"
-            className="h-10 w-10 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform shrink-0"
-          />
+          {store?.logo_url ? (
+            <img
+              src={store.logo_url}
+              alt={store.name}
+              className="h-10 w-10 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform shrink-0"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <Store className="h-5 w-5 text-muted-foreground" />
+            </div>
+          )}
           <span className="font-black tracking-tighter text-foreground uppercase text-sm">
-            Mariano Mens Wear
+            {store?.name ?? "Anaisa Store"}
           </span>
         </Link>
       </div>
@@ -111,7 +117,7 @@ function AdminLayout() {
         <div className="rounded-2xl bg-muted/50 p-4 border border-border/50">
           {store && (
             <a
-              href="https://www.marianomenswear.com.br"
+              href="https://www.anaisastore.com.br"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between group mb-4"
@@ -119,7 +125,7 @@ function AdminLayout() {
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-foreground">Sua Loja</span>
                 <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                  marianomenswear.com.br
+                  anaisastore.com.br
                 </span>
               </div>
               <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center border border-border group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm">
@@ -151,12 +157,18 @@ function AdminLayout() {
       {/* Mobile Header */}
       <header className="fixed top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border/60 bg-white/80 px-4 backdrop-blur-md md:hidden">
         <Link to="/admin" className="flex items-center gap-2 font-bold tracking-tight">
-          <img
-            src="https://dhpsrhbxhaaprmotbabb.supabase.co/storage/v1/object/public/store-assets/923a30da-db7d-469e-bc36-511e4b0f2df5.png"
-            alt="Mariano Mens Wear"
-            className="h-8 w-8 rounded-full object-cover shadow-sm shrink-0"
-          />
-          <span>Mariano Mens Wear</span>
+          {store?.logo_url ? (
+            <img
+              src={store.logo_url}
+              alt={store.name}
+              className="h-8 w-8 rounded-full object-cover shadow-sm shrink-0"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <Store className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
+          <span>{store?.name ?? "Anaisa Store"}</span>
         </Link>
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
