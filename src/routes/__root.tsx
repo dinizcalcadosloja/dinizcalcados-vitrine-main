@@ -71,22 +71,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Anaisa Store - Loja Online" },
+      { title: "Anaisa Store | Perfumaria Online" },
       {
         name: "description",
-        content: "Vista sua melhor versão. Moda masculina, perfumaria e acessórios.",
+        content:
+          "Perfumes importados e nacionais, perfumes árabes, body splash, hidratantes e fragrâncias especiais.",
       },
-      { property: "og:title", content: "Anaisa Store - Loja Online" },
+      { property: "og:title", content: "Anaisa Store | Perfumaria Online" },
       {
         property: "og:description",
-        content: "Vista sua melhor versão. Moda masculina, perfumaria e acessórios.",
+        content:
+          "Perfumes importados e nacionais, perfumes árabes, body splash e fragrâncias especiais.",
       },
       { property: "og:image", content: "https://anaisastore.com.br/preview.jpg" },
       { property: "og:url", content: "https://anaisastore.com.br" },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Anaisa Store" },
+      { property: "og:locale", content: "pt_BR" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Anaisa Store - Loja Online" },
-      { name: "twitter:description", content: "Vista sua melhor versão." },
+      { name: "twitter:title", content: "Anaisa Store | Perfumaria Online" },
+      {
+        name: "twitter:description",
+        content: "Perfumes importados, nacionais, árabes e body splash.",
+      },
       { name: "twitter:image", content: "https://anaisastore.com.br/preview.jpg" },
     ],
     links: [
