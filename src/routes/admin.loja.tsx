@@ -269,8 +269,21 @@ function StoreSettings() {
               <Label>WhatsApp (com DDD)</Label>
               <Input
                 value={form.whatsapp ?? ""}
-                onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                placeholder="11999998888"
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  let masked = digits;
+                  if (digits.length > 10) {
+                    masked = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+                  } else if (digits.length > 6) {
+                    masked = `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+                  } else if (digits.length > 2) {
+                    masked = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+                  } else if (digits.length > 0) {
+                    masked = `(${digits}`;
+                  }
+                  setForm({ ...form, whatsapp: masked });
+                }}
+                placeholder="(11) 99999-8888"
               />
             </div>
             <div className="space-y-2">
@@ -282,14 +295,6 @@ function StoreSettings() {
               />
             </div>
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Cor do tema</Label>
-          <Input
-            type="color"
-            value={form.theme_color ?? "#0f172a"}
-            onChange={(e) => setForm({ ...form, theme_color: e.target.value })}
-          />
         </div>
         <div className="space-y-2">
           <Label>Data de criação do domínio</Label>
