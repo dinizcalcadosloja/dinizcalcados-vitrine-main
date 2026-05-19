@@ -6,7 +6,6 @@ import { useCart } from "@/lib/cart";
 import { useFavorites } from "@/lib/favorites";
 import {
   ShoppingBag,
-  Info,
   MessageCircle,
   MapPin,
   Instagram,
@@ -19,6 +18,7 @@ import {
   Sparkles,
   User as UserIcon,
   X,
+  Info,
 } from "lucide-react";
 import { useFilterMenu } from "@/lib/filter-context";
 import { useSearchMenu } from "@/lib/search-context";
@@ -167,7 +167,7 @@ export function StoreHeader({ store }: { store: any }) {
                   // otherwise it would dismiss the sheet right before our onClick toggles it back open.
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => setCategoryMenuOpen((prev) => !prev)}
-                  className="lg:hidden rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
+                  className="md:hidden rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
                   aria-label={
                     isCategoryMenuOpen ? "Fechar menu de categorias" : "Abrir menu de categorias"
                   }
@@ -214,44 +214,113 @@ export function StoreHeader({ store }: { store: any }) {
                   <div className="relative flex-1 overflow-hidden">
                     {/* Level 1: departments */}
                     <div
-                      className={`absolute inset-0 overflow-y-auto px-4 py-6 transition-transform duration-300 ease-in-out ${
+                      className={`absolute inset-0 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out ${
                         drawerLevel === "departments" ? "translate-x-0" : "-translate-x-full"
                       }`}
                     >
-                      <p className="px-2 mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                        Filtrar por
-                      </p>
-                      <nav className="space-y-1" aria-label="Categorias">
-                        <button
-                          onClick={() => selectDept(null)}
-                          className={`${btnBase} ${!activeDept ? activeBtn : inactiveBtn}`}
-                        >
-                          <LayoutGrid className="h-4 w-4 opacity-70 shrink-0" />
-                          <span className="flex-1 text-left">Todos</span>
-                        </button>
+                      {/* ── Scrollable categories area ── */}
+                      <div className="flex-1 overflow-y-auto px-4 py-6">
+                        <p className="px-2 mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                          Filtrar por
+                        </p>
+                        <nav className="space-y-1" aria-label="Categorias">
+                          <button
+                            onClick={() => selectDept(null)}
+                            className={`${btnBase} ${!activeDept ? activeBtn : inactiveBtn}`}
+                          >
+                            <LayoutGrid className="h-4 w-4 opacity-70 shrink-0" />
+                            <span className="flex-1 text-left">Todos</span>
+                          </button>
 
-                        {departments.map((d) => {
-                          const hasSubs = categories.some((c) => c.parent_id === d.id);
-                          return (
+                          {departments.map((d) => {
+                            const hasSubs = categories.some((c) => c.parent_id === d.id);
+                            return (
+                              <button
+                                key={d.id}
+                                onClick={() => {
+                                  if (hasSubs) {
+                                    setDrawerDept(d);
+                                    setDrawerLevel("subcats");
+                                  } else {
+                                    selectDept(d.id);
+                                  }
+                                }}
+                                className={`${btnBase} ${activeDept === d.id ? activeBtn : inactiveBtn}`}
+                              >
+                                {getCategoryIcon(d.name)}
+                                <span className="flex-1 text-left">{d.name}</span>
+                                {hasSubs && (
+                                  <ChevronRight className="h-4 w-4 shrink-0 opacity-40" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </nav>
+                      </div>
+
+                      {/* ── Footer fixo: informações da loja ── */}
+                      <div className="shrink-0 border-t border-border px-4 pt-4 pb-4">
+                        <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                          Informações da loja
+                        </p>
+                        <div className="space-y-0.5">
+                          {store.description && (
+                            <div className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 cursor-default text-muted-foreground">
+                              <Info className="h-[18px] w-[18px] shrink-0 text-slate-400" />
+                              <span className="flex-1 text-left text-sm leading-snug">
+                                {store.description}
+                              </span>
+                            </div>
+                          )}
+                          {(store.address || store.city || store.state) && (
                             <button
-                              key={d.id}
                               onClick={() => {
-                                if (hasSubs) {
-                                  setDrawerDept(d);
-                                  setDrawerLevel("subcats");
-                                } else {
-                                  selectDept(d.id);
-                                }
+                                const q = [store.address, store.city, store.state, store.zip_code]
+                                  .filter(Boolean)
+                                  .join(", ");
+                                window.open(
+                                  `https://maps.google.com/?q=${encodeURIComponent(q)}`,
+                                  "_blank",
+                                );
                               }}
-                              className={`${btnBase} ${activeDept === d.id ? activeBtn : inactiveBtn}`}
+                              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-all duration-200 hover:opacity-80"
                             >
-                              {getCategoryIcon(d.name)}
-                              <span className="flex-1 text-left">{d.name}</span>
-                              {hasSubs && <ChevronRight className="h-4 w-4 shrink-0 opacity-40" />}
+                              <MapPin className="h-[18px] w-[18px] shrink-0 text-red-500" />
+                              <span className="flex-1 text-left">
+                                {[store.address, store.city, store.state]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </span>
                             </button>
-                          );
-                        })}
-                      </nav>
+                          )}
+                          {store.whatsapp && (
+                            <button
+                              onClick={openWhatsApp}
+                              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-all duration-200 hover:opacity-80"
+                            >
+                              <MessageCircle
+                                className="h-[18px] w-[18px] shrink-0"
+                                style={{ color: "#25D366" }}
+                              />
+                              <span className="flex-1 text-left">WhatsApp</span>
+                            </button>
+                          )}
+                          {store.instagram && (
+                            <button
+                              onClick={openInstagram}
+                              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-all duration-200 hover:opacity-80"
+                            >
+                              <Instagram className="h-[18px] w-[18px] shrink-0 text-pink-500" />
+                              <span className="flex-1 text-left">Instagram</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="border-t border-border mt-3 pt-3 px-2 space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground/40">
+                            Powered by Amanda Miranda
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Level 2: subcategories */}
@@ -304,13 +373,13 @@ export function StoreHeader({ store }: { store: any }) {
                   }
                   openSearchMenu(true);
                 }}
-                className="lg:hidden rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
+                className="md:hidden rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
                 aria-label="Pesquisar produtos"
               >
                 <Search className="h-5 w-5" />
               </Button>
               {/* Desktop only: logo + store name */}
-              <Link to="/" className="hidden lg:flex items-center gap-3 group min-w-0">
+              <Link to="/" className="hidden md:flex items-center gap-3 group min-w-0">
                 {store.logo_url ? (
                   <img
                     src={store.logo_url}
@@ -331,7 +400,7 @@ export function StoreHeader({ store }: { store: any }) {
             {/* ── Center: logo avatar (mobile only, truly centered via absolute) ── */}
             <Link
               to="/"
-              className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center group"
+              className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center group"
               aria-label={store.name}
             >
               {store.logo_url ? (
@@ -349,24 +418,26 @@ export function StoreHeader({ store }: { store: any }) {
 
             {/* ── Right: action icons (mobile and desktop) ── */}
             <div className="flex items-center gap-0.5 sm:gap-2 ml-auto shrink-0 z-10">
+              {/* Desktop only: Instagram */}
               {store.instagram && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={openInstagram}
-                  className="rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 sm:h-11 sm:w-11 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
+                  className="hidden md:inline-flex rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 sm:h-11 sm:w-11 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
                   title="Instagram"
                 >
                   <Instagram className="h-5 w-5" />
                 </Button>
               )}
 
+              {/* Desktop only: store info dialog */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 sm:h-11 sm:w-11 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
+                    className="hidden md:inline-flex rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300 active:scale-90 hover:scale-110 h-10 w-10 sm:h-11 sm:w-11 cursor-pointer active:bg-slate-200/80 hover:shadow-sm"
                     title="Informações"
                   >
                     <Info className="h-5 w-5" />
