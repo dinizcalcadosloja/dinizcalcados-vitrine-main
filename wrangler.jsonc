@@ -3,6 +3,7 @@
   "name": "anaisa-vitrine-main",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
   "main": "src/server.ts",
   // "routes": [
   //   { "pattern": "anaisastore.com.br", "custom_domain": true },
