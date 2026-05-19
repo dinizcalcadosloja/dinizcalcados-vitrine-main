@@ -48,14 +48,17 @@ export function useFavorites(slug: string) {
     (productId: string) => {
       setFavoriteIds((current) => {
         const isFavorite = current.includes(productId);
-        const next = isFavorite 
-          ? current.filter((id) => id !== productId) 
+        const next = isFavorite
+          ? current.filter((id) => id !== productId)
           : [...current, productId];
-        persist(next);
+        localStorage.setItem(key(slug), JSON.stringify(next));
+        queueMicrotask(() => {
+          window.dispatchEvent(new CustomEvent("favorites-updated", { detail: { slug } }));
+        });
         return next;
       });
     },
-    [persist],
+    [slug],
   );
 
   const isFavorite = useCallback(

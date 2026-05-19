@@ -65,11 +65,16 @@ export function useCart(slug: string) {
           idx >= 0
             ? current.map((i, index) => (index === idx ? { ...i, qty: i.qty + item.qty } : i))
             : [...current, item];
-        persist(next);
+        // Persist synchronously to localStorage, but defer the cross-component event
+        // dispatch to a microtask so we don't update other subscribers during render.
+        localStorage.setItem(key(slug), JSON.stringify(next));
+        queueMicrotask(() => {
+          window.dispatchEvent(new CustomEvent("cart-updated", { detail: { slug } }));
+        });
         return next;
       });
     },
-    [persist],
+    [slug],
   );
 
   const updateQty = useCallback(
@@ -78,22 +83,28 @@ export function useCart(slug: string) {
         const next = current
           .map((i) => (i.variantId === variantId ? { ...i, qty } : i))
           .filter((i) => i.qty > 0);
-        persist(next);
+        localStorage.setItem(key(slug), JSON.stringify(next));
+        queueMicrotask(() => {
+          window.dispatchEvent(new CustomEvent("cart-updated", { detail: { slug } }));
+        });
         return next;
       });
     },
-    [persist],
+    [slug],
   );
 
   const remove = useCallback(
     (variantId: string) => {
       setItems((current) => {
         const next = current.filter((i) => i.variantId !== variantId);
-        persist(next);
+        localStorage.setItem(key(slug), JSON.stringify(next));
+        queueMicrotask(() => {
+          window.dispatchEvent(new CustomEvent("cart-updated", { detail: { slug } }));
+        });
         return next;
       });
     },
-    [persist],
+    [slug],
   );
 
   const clear = useCallback(() => {
