@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store-context";
 import { useSearchMenu } from "@/lib/search-context";
 import { useFilterMenu } from "@/lib/filter-context";
+import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import {
   Search,
@@ -13,6 +15,7 @@ import {
   LayoutGrid,
   User as UserIcon,
   Sparkles,
+  Clock,
   X,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,14 +23,60 @@ import { ProductCard } from "@/components/ProductCard";
 import { StoreBanner } from "@/components/StoreBanner";
 import { StoreFilters } from "@/components/StoreFilters";
 
+const RECENT_SEARCHES_KEY = (slug: string) => `recent-searches:${slug}`;
+
 export function StorefrontPage() {
   const store = useStore();
   const [q, setQ] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const { isOpen: isSearchOpen, setIsOpen: setIsSearchOpen } = useSearchMenu();
   const { activeDept, setActiveDept, activeCat, setActiveCat } = useFilterMenu();
   const [viewAllCategory, setViewAllCategory] = useState<{ id: string; name: string } | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const scrollContainerRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Debounce searchInput → q (300ms)
+  useEffect(() => {
+    const t = setTimeout(() => setQ(searchInput), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_SEARCHES_KEY(store.slug));
+      if (raw) setRecentSearches(JSON.parse(raw));
+    } catch {}
+  }, [store.slug]);
+
+  // Autofocus when opening overlay
+  useEffect(() => {
+    if (isSearchOpen) {
+      const t = setTimeout(() => searchInputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [isSearchOpen]);
+
+  const saveRecentSearch = (term: string) => {
+    const clean = term.trim();
+    if (!clean) return;
+    const next = [
+      clean,
+      ...recentSearches.filter((s) => s.toLowerCase() !== clean.toLowerCase()),
+    ].slice(0, 5);
+    setRecentSearches(next);
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY(store.slug), JSON.stringify(next));
+    } catch {}
+  };
+
+  const clearAndCloseSearch = () => {
+    setSearchInput("");
+    setQ("");
+    setIsSearchOpen(false);
+  };
 
   const scroll = (key: string, direction: "left" | "right") => {
     const container = scrollContainerRef.current[key];
@@ -115,6 +164,23 @@ export function StorefrontPage() {
     return <LayoutGrid className="h-4 w-4" />;
   };
 
+  // Real-time search results (overlay only) — based on debounced `q`
+  const searchResults = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return { products: [] as any[], categories: [] as any[] };
+    const productMatches = (products as any[])
+      .filter((p) => p.name?.toLowerCase().includes(term))
+      .slice(0, 8);
+    const categoryMatches = (cats as any[])
+      .filter((c) => c.name?.toLowerCase().includes(term))
+      .slice(0, 4);
+    return { products: productMatches, categories: categoryMatches };
+  }, [products, cats, q]);
+
+  const isDebouncing = searchInput.trim() !== q.trim();
+  const hasQuery = searchInput.trim().length > 0;
+  const hasResults = searchResults.products.length > 0 || searchResults.categories.length > 0;
+
   return (
     <>
       {/* ── Mobile search overlay (< 1024px) — triggered by header search icon ── */}
@@ -126,33 +192,171 @@ export function StorefrontPage() {
             onClick={() => setIsSearchOpen(false)}
           />
           {/* Search panel */}
-          <div className="relative bg-white px-4 pt-5 pb-5 shadow-xl animate-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-3 h-14 bg-slate-50 rounded-2xl border border-slate-200 px-5 focus-within:shadow-md focus-within:border-slate-300 transition-all">
+          <div className="relative bg-white px-4 pt-5 pb-3 shadow-xl animate-in slide-in-from-top-2 duration-300 flex flex-col max-h-full">
+            <div className="flex items-center gap-3 h-14 bg-slate-50 rounded-2xl border border-slate-200 px-5 focus-within:shadow-md focus-within:border-slate-300 transition-all shrink-0">
               <Search className="h-5 w-5 text-slate-400 shrink-0" />
               <input
-                autoFocus
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
+                ref={searchInputRef}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="O que você está procurando?"
                 className="flex-1 bg-transparent outline-none text-base placeholder:text-slate-400 text-slate-900 min-w-0"
-                onKeyDown={(e) => e.key === "Escape" && setIsSearchOpen(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") clearAndCloseSearch();
+                  if (e.key === "Enter") saveRecentSearch(searchInput);
+                }}
               />
-              {q && (
+              {hasQuery && (
                 <button
-                  onClick={() => setQ("")}
+                  onClick={clearAndCloseSearch}
                   className="flex items-center justify-center h-6 w-6 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-colors"
-                  aria-label="Limpar busca"
+                  aria-label="Limpar e fechar busca"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
+
             <button
               onClick={() => setIsSearchOpen(false)}
-              className="mt-4 w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors py-1"
+              className="mt-3 mb-1 w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors py-1 shrink-0"
             >
               Cancelar
             </button>
+
+            {/* Results / states */}
+            <div className="mt-2 -mx-4 px-4 overflow-y-auto flex-1 min-h-0">
+              {/* Empty state — show recent searches */}
+              {!hasQuery && (
+                <div className="py-2">
+                  {recentSearches.length > 0 ? (
+                    <>
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                          Pesquisas recentes
+                        </p>
+                        <button
+                          onClick={() => {
+                            setRecentSearches([]);
+                            try {
+                              localStorage.removeItem(RECENT_SEARCHES_KEY(store.slug));
+                            } catch {}
+                          }}
+                          className="text-xs text-slate-400 hover:text-slate-600"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                      <ul className="space-y-1">
+                        {recentSearches.map((term) => (
+                          <li key={term}>
+                            <button
+                              onClick={() => setSearchInput(term)}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                            >
+                              <Clock className="h-4 w-4 text-slate-400 shrink-0" />
+                              <span className="text-sm text-slate-700 truncate">{term}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-400 text-center py-6">
+                      Digite para pesquisar produtos, categorias e marcas
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Loading state */}
+              {hasQuery && isDebouncing && (
+                <div className="py-6 text-center">
+                  <p className="text-sm text-slate-500">Pesquisando...</p>
+                </div>
+              )}
+
+              {/* Empty results */}
+              {hasQuery && !isDebouncing && !hasResults && (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-slate-600 font-medium">Nenhum resultado encontrado</p>
+                  <p className="text-xs text-slate-400 mt-1">Tente outros termos de busca</p>
+                </div>
+              )}
+
+              {/* Results */}
+              {hasQuery && !isDebouncing && hasResults && (
+                <div className="pb-4">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 px-1">
+                    Resultados
+                  </p>
+                  <ul className="space-y-1">
+                    {searchResults.products.map((p: any) => {
+                      const cover = p.product_images?.sort(
+                        (a: any, b: any) => a.position - b.position,
+                      )[0]?.url;
+                      return (
+                        <li key={`prod-${p.id}`}>
+                          <Link
+                            to="/produto/$productId"
+                            params={{ productId: p.id }}
+                            onClick={() => {
+                              saveRecentSearch(searchInput);
+                              setIsSearchOpen(false);
+                            }}
+                            className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition-colors"
+                          >
+                            <div className="h-12 w-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                              {cover ? (
+                                <img
+                                  src={cover}
+                                  alt={p.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <LayoutGrid className="h-5 w-5 text-slate-300" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate">
+                                {p.name}
+                              </p>
+                              <p className="text-xs text-slate-500">{formatBRL(Number(p.price))}</p>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                    {searchResults.categories.map((c: any) => (
+                      <li key={`cat-${c.id}`}>
+                        <button
+                          onClick={() => {
+                            saveRecentSearch(searchInput);
+                            if (c.parent_id) {
+                              setActiveDept(c.parent_id);
+                              setActiveCat(c.id);
+                            } else {
+                              setActiveDept(c.id);
+                              setActiveCat(null);
+                            }
+                            setIsSearchOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                        >
+                          <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
+                            {getCategoryIcon(c.name)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">{c.name}</p>
+                            <p className="text-xs text-slate-500">Categoria</p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
