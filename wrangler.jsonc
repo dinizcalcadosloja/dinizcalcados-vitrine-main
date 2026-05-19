@@ -4,10 +4,10 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
-  "routes": [
-    { "pattern": "anaisastore.com.br", "custom_domain": true },
-    { "pattern": "www.anaisastore.com.br", "custom_domain": true },
-  ],
+  // "routes": [
+  //   { "pattern": "anaisastore.com.br", "custom_domain": true },
+  //   { "pattern": "www.anaisastore.com.br", "custom_domain": true },
+  // ],
   "kv_namespaces": [
     {
       "binding": "ANALYTICS_KV",
