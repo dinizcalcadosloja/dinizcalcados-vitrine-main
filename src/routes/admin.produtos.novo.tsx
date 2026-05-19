@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,9 +17,13 @@ import {
   BadgeDollarSign,
   Settings,
   Image as ImageIcon,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -27,16 +31,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/produtos/novo")({
   component: NewProduct,
 });
+
+type Variant = {
+  id?: string;
+  size: string;
+  color: string;
+  numbering: string;
+};
 
 function NewProduct() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [colorImages, setColorImages] = useState<Record<string, string[]>>({});
+  const [colorActive, setColorActive] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -111,6 +126,39 @@ function NewProduct() {
       await supabase
         .from("product_images")
         .insert(images.map((url, i) => ({ product_id: product.id, url, position: i })));
+    }
+
+    // Salvar variações
+    if (form.has_variations) {
+      const validVariants = variants.filter((v) => v.size || v.color || v.numbering);
+      if (validVariants.length) {
+        await supabase.from("product_variants").insert(
+          validVariants.map((v) => ({
+            product_id: product.id,
+            size: v.size || null,
+            color: v.color || null,
+            numbering: v.numbering || null,
+            is_active: colorActive[(v.color ?? "").trim()] ?? true,
+          })),
+        );
+      }
+
+      // Salvar imagens das cores
+      const colorRows: {
+        product_id: string;
+        color: string;
+        image_url: string;
+        position: number;
+      }[] = [];
+      for (const [color, urls] of Object.entries(colorImages)) {
+        if (!color) continue;
+        urls.forEach((image_url, position) => {
+          if (image_url) colorRows.push({ product_id: product.id, color, image_url, position });
+        });
+      }
+      if (colorRows.length) {
+        await supabase.from("product_color_images").insert(colorRows);
+      }
     }
 
     toast.success("Produto criado com sucesso!");
@@ -210,15 +258,23 @@ function NewProduct() {
               </CardTitle>
               <CardDescription>
                 {form.has_variations
-                  ? "Você poderá adicionar variações após salvar o produto."
+                  ? "Gerencie as cores e tamanhos disponíveis para este produto"
                   : "Este produto será vendido como item único."}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {form.has_variations && (
+            <CardContent className="space-y-6">
+              {form.has_variations ? (
+                <VariantsEditor
+                  variants={variants}
+                  setVariants={setVariants}
+                  colorImages={colorImages}
+                  setColorImages={setColorImages}
+                  colorActive={colorActive}
+                  setColorActive={setColorActive}
+                />
+              ) : (
                 <p className="text-sm text-muted-foreground italic">
-                  Opções de grade (cor/tamanho) ficarão disponíveis na tela de edição logo após a
-                  criação.
+                  O produto será exibido sem opções de escolha para o cliente.
                 </p>
               )}
             </CardContent>
@@ -336,6 +392,306 @@ function NewProduct() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+const COMMON_SIZES = ["PP", "P", "M", "G", "GG", "XG", "Único"];
+
+function VariantsEditor({
+  variants,
+  setVariants,
+  colorImages,
+  setColorImages,
+  colorActive,
+  setColorActive,
+}: {
+  variants: Variant[];
+  setVariants: (v: Variant[]) => void;
+  colorImages: Record<string, string[]>;
+  setColorImages: (v: Record<string, string[]>) => void;
+  colorActive: Record<string, boolean>;
+  setColorActive: (v: Record<string, boolean>) => void;
+}) {
+  const [newColorAdded, setNewColorAdded] = useState<string | null>(null);
+  const colorRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const colors = Array.from(new Set(variants.map((v) => (v.color ?? "").trim()).filter(Boolean)));
+
+  useEffect(() => {
+    if (newColorAdded && colorRefs.current[newColorAdded]) {
+      colorRefs.current[newColorAdded]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const input = colorRefs.current[newColorAdded]?.querySelector("input");
+      if (input) (input as HTMLInputElement).focus();
+      setNewColorAdded(null);
+    }
+  }, [newColorAdded, colors]);
+
+  function addColor(name: string) {
+    const color = name.trim();
+    if (!color || colors.includes(color)) return;
+    setVariants([{ size: "", color, numbering: "" }, ...variants]);
+    setColorActive({ ...colorActive, [color]: true });
+    setNewColorAdded(color);
+  }
+
+  function removeColor(color: string) {
+    setVariants(variants.filter((v) => v.color !== color));
+    const nextImages = { ...colorImages };
+    delete nextImages[color];
+    setColorImages(nextImages);
+    const nextActive = { ...colorActive };
+    delete nextActive[color];
+    setColorActive(nextActive);
+  }
+
+  function renameColor(oldName: string, newName: string) {
+    const next = newName.trim();
+    if (!next || next === oldName) return;
+    setVariants(variants.map((v) => (v.color === oldName ? { ...v, color: next } : v)));
+    if (colorImages[oldName]) {
+      const nextImages = { ...colorImages };
+      nextImages[next] = nextImages[oldName];
+      delete nextImages[oldName];
+      setColorImages(nextImages);
+    }
+    const nextActive = { ...colorActive };
+    if (oldName in nextActive) {
+      nextActive[next] = nextActive[oldName];
+      delete nextActive[oldName];
+    }
+    setColorActive(nextActive);
+  }
+
+  function toggleColorActive(color: string, active: boolean) {
+    setColorActive({ ...colorActive, [color]: active });
+  }
+
+  function updateRow(target: Variant, patch: Partial<Variant>) {
+    setVariants(variants.map((v) => (v === target ? { ...v, ...patch } : v)));
+  }
+
+  function removeRow(target: Variant) {
+    setVariants(variants.filter((v) => v !== target));
+  }
+
+  function toggleSize(color: string, size: string) {
+    const existing = variants.find((v) => v.color === color && v.size === size);
+    if (existing) {
+      setVariants(variants.filter((v) => v !== existing));
+    } else {
+      setVariants([...variants, { color, size, numbering: "" }]);
+    }
+  }
+
+  function addNumberingRow(color: string) {
+    setVariants([...variants, { color, size: "", numbering: "" }]);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Label className="text-base font-semibold">Cores e Grade</Label>
+      </div>
+
+      <AddColorInput onAdd={addColor} existing={colors} />
+
+      {colors.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Cadastre as cores disponíveis. Para cada cor, escolha os tamanhos da grade.
+        </p>
+      )}
+
+      <div className="space-y-6">
+        {colors.map((color) => {
+          const rows = variants.filter((v) => v.color === color);
+          const sizeRows = rows.filter((r) => r.size);
+          const numberingRows = rows.filter((r) => !r.size);
+          return (
+            <div
+              key={color}
+              ref={(el) => {
+                colorRefs.current[color] = el;
+              }}
+              className={cn(
+                "rounded-xl border border-border bg-card overflow-hidden transition-opacity",
+                colorActive[color] === false && "opacity-50",
+              )}
+            >
+              <div className="p-4 border-b border-border bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-1">
+                    <div
+                      className="w-4 h-4 rounded-full border border-border"
+                      style={{ backgroundColor: color.toLowerCase() }}
+                    />
+                    <Input
+                      defaultValue={color}
+                      onBlur={(e) => renameColor(color, e.target.value)}
+                      className="h-8 max-w-[200px] font-bold bg-transparent border-none focus-visible:ring-0 px-0 text-base"
+                    />
+                    {colorActive[color] === false && (
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        Inativo
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={colorActive[color] !== false}
+                      onCheckedChange={(checked) => toggleColorActive(color, checked)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeColor(color)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                    Fotos desta cor
+                  </Label>
+                  <MultiImageUpload
+                    values={colorImages[color] ?? []}
+                    onChange={(urls) => {
+                      const next = { ...colorImages };
+                      if (urls.length) next[color] = urls;
+                      else delete next[color];
+                      setColorImages(next);
+                    }}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                    Grade de Tamanhos
+                  </Label>
+
+                  <div className="flex flex-wrap gap-2">
+                    {COMMON_SIZES.map((s) => {
+                      const active = sizeRows.some((r) => r.size === s);
+                      return (
+                        <Button
+                          key={s}
+                          type="button"
+                          variant={active ? "default" : "outline"}
+                          size="sm"
+                          className="min-w-[40px]"
+                          onClick={() => toggleSize(color, s)}
+                        >
+                          {s}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  {sizeRows.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {sizeRows.map((v, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
+                        >
+                          <span className="w-8 h-8 flex items-center justify-center rounded bg-muted text-xs font-bold">
+                            {v.size}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground"
+                            onClick={() => removeRow(v)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {numberingRows.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Numeração Personalizada</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {numberingRows.map((v, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
+                          >
+                            <Input
+                              placeholder="Nº"
+                              value={v.numbering}
+                              className="h-8"
+                              onChange={(e) => updateRow(v, { numbering: e.target.value })}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
+                              onClick={() => removeRow(v)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full border-dashed border-2 hover:border-solid"
+                    onClick={() => addNumberingRow(color)}
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Adicionar numeração personalizada
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AddColorInput({ onAdd, existing }: { onAdd: (s: string) => void; existing: string[] }) {
+  const [val, setVal] = useState("");
+  function submit() {
+    const v = val.trim();
+    if (v && !existing.includes(v)) onAdd(v);
+    setVal("");
+  }
+  return (
+    <div className="flex gap-2">
+      <Input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        placeholder="Adicionar cor (ex: Preto)"
+        className="h-10 max-w-[240px]"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          }
+        }}
+      />
+      <Button type="button" size="default" onClick={submit} className="h-10">
+        <Plus className="mr-2 h-4 w-4" /> Adicionar Cor
+      </Button>
     </div>
   );
 }
