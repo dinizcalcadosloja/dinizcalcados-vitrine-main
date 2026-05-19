@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StoreHeader } from "@/components/store-header";
 import { StoreCtx, useStore } from "@/lib/store-context";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 function FaviconUpdater({ logoUrl, storeName }: { logoUrl?: string | null; storeName?: string }) {
   useEffect(() => {
@@ -77,6 +78,7 @@ function StoreLayout() {
         <footer className="mt-16 border-t border-border py-8 text-center text-xs text-muted-foreground">
           Powered by Amanda Miranda
         </footer>
+        <WhatsAppButton />
       </div>
     </StoreCtx.Provider>
   );

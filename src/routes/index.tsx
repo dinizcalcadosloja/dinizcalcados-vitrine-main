@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StoreCtx } from "@/lib/store-context";
 import { StoreHeader } from "@/components/store-header";
 import { StorefrontPage } from "@/components/StorefrontPage";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { trackVisit } from "@/lib/analytics";
 
 const STORE_SLUG = "anaisa-store";
@@ -79,6 +80,7 @@ function StoreRoot() {
         <footer className="mt-16 border-t border-border py-8 text-center text-xs text-muted-foreground">
           Powered by Amanda Miranda
         </footer>
+        <WhatsAppButton />
       </div>
     </StoreCtx.Provider>
   );
