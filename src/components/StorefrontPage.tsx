@@ -37,6 +37,13 @@ export function StorefrontPage() {
 
   const scrollContainerRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  // Reset filters to "Todos" whenever the storefront page mounts
+  useEffect(() => {
+    setActiveDept(null);
+    setActiveCat(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Debounce searchInput → q (300ms)
   useEffect(() => {
     const t = setTimeout(() => setQ(searchInput), 300);
@@ -460,8 +467,16 @@ export function StorefrontPage() {
                 </div>
               ) : (
                 <div className="space-y-24">
-                  {Array.from(productsByCategory.entries()).map(
-                    ([categoryId, categoryProducts]) => {
+                  {Array.from(productsByCategory.entries())
+                    .sort(([aId], [bId]) => {
+                      const aIdx = (cats as any[]).findIndex((c: any) => c.id === aId);
+                      const bIdx = (cats as any[]).findIndex((c: any) => c.id === bId);
+                      // uncategorized (not found → -1) goes last
+                      if (aIdx === -1) return 1;
+                      if (bIdx === -1) return -1;
+                      return aIdx - bIdx;
+                    })
+                    .map(([categoryId, categoryProducts]) => {
                       const category = cats.find((c: any) => c.id === categoryId);
                       const categoryName = category?.name || "Sem categoria";
 
@@ -525,8 +540,7 @@ export function StorefrontPage() {
                           </div>
                         </div>
                       );
-                    },
-                  )}
+                    })}
                 </div>
               )}
             </section>

@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 
-const STORE_SLUG = "anaisa-store";
+const STORE_SLUG = import.meta.env.VITE_STORE_SLUG as string;
 
 export const Route = createFileRoute("/favoritos")({
   component: FavoritosRoot,

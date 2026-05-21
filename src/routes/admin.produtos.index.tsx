@@ -49,6 +49,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/produtos/")({
   component: ProductsList,
@@ -67,6 +77,8 @@ function ProductsList() {
   // Paginação
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: store } = useQuery({
     queryKey: ["my-store", user?.id],
@@ -172,9 +184,16 @@ function ProductsList() {
     navigate({ to: "/admin/produtos/novo" });
   }
 
-  async function deleteProduct(id: string) {
-    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
-    const { error } = await supabase.from("products").delete().eq("id", id);
+  function deleteProduct(product: { id: string; name: string }) {
+    setDeleteTarget(product);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("products").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    setDeleteTarget(null);
     if (error) return toast.error(error.message);
     toast.success("Produto excluído");
     refetch();
@@ -239,306 +258,336 @@ function ProductsList() {
     );
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 px-1 sm:px-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2 sm:px-1">
-        <div>
-          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Produtos
-          </h1>
-          <p className="hidden sm:block text-sm text-muted-foreground mt-1">
-            Gerencie seu inventário e catálogo de produtos.
-          </p>
+    <>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir{" "}
+              <span className="font-semibold text-foreground">{deleteTarget?.name}</span>? Esta ação
+              não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 px-1 sm:px-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2 sm:px-1">
+          <div>
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+              Produtos
+            </h1>
+            <p className="hidden sm:block text-sm text-muted-foreground mt-1">
+              Gerencie seu inventário e catálogo de produtos.
+            </p>
+          </div>
+          <Button
+            onClick={createProduct}
+            className="rounded-xl font-bold shadow-lg shadow-primary/10 transition-all active:scale-[0.98] w-full sm:w-auto h-10 px-4 text-xs sm:text-sm"
+          >
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Novo produto
+          </Button>
         </div>
-        <Button
-          onClick={createProduct}
-          className="rounded-xl font-bold shadow-lg shadow-primary/10 transition-all active:scale-[0.98] w-full sm:w-auto h-10 px-4 text-xs sm:text-sm"
-        >
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Novo produto
-        </Button>
-      </div>
 
-      <Card className="border-border/60 shadow-sm overflow-hidden rounded-2xl sm:rounded-3xl border-0 sm:border">
-        <CardContent className="p-0">
-          <div className="flex flex-col border-b border-border/40 bg-muted/20 p-4 gap-4 lg:flex-row lg:items-center lg:justify-between lg:p-6">
-            <div className="relative w-full lg:max-w-sm">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-              <Input
-                placeholder="Buscar por nome..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-10 h-10 w-full rounded-xl border-border/40 bg-white focus-visible:ring-primary/20 transition-all text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-              <Select
-                value={filterStatus}
-                onValueChange={(v) => {
-                  setFilterStatus(v);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-[130px] h-10 rounded-xl border-border/40 bg-white text-xs sm:text-sm">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <Filter className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-                    <span className="truncate">
-                      <SelectValue placeholder="Status" />
-                    </span>
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-border/40 shadow-xl shadow-black/5">
-                  <SelectItem value="all">Todos Status</SelectItem>
-                  <SelectItem value="active">Ativos</SelectItem>
-                  <SelectItem value="inactive">Inativos</SelectItem>
-                  <SelectItem value="featured">Em destaque</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filterDept || "all"}
-                onValueChange={(v) => {
-                  setFilterDept(v === "all" ? "" : v);
-                  setFilterCat("");
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-[150px] h-10 rounded-xl border-border/40 bg-white text-xs sm:text-sm">
-                  <span className="truncate">
-                    <SelectValue placeholder="Depto" />
-                  </span>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-border/40 shadow-xl shadow-black/5">
-                  <SelectItem value="all">Todos Deptos</SelectItem>
-                  {departments.map((d: any) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filterCat || "all"}
-                onValueChange={(v) => {
-                  setFilterCat(v === "all" ? "" : v);
-                  setPage(1);
-                }}
-                disabled={!filterDept}
-              >
-                <SelectTrigger className="w-full sm:w-[150px] h-10 rounded-xl border-border/40 bg-white text-xs sm:text-sm">
-                  <span className="truncate">
-                    <SelectValue placeholder={filterDept ? "Categoria" : "Escolha Depto"} />
-                  </span>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-border/40 shadow-xl shadow-black/5">
-                  <SelectItem value="all">Todas Categorias</SelectItem>
-                  {subcategories.map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {(filterDept || filterCat || filterStatus !== "all" || search) && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setSearch("");
-                    setFilterDept("");
-                    setFilterCat("");
-                    setFilterStatus("all");
+        <Card className="border-border/60 shadow-sm overflow-hidden rounded-2xl sm:rounded-3xl border-0 sm:border">
+          <CardContent className="p-0">
+            <div className="flex flex-col border-b border-border/40 bg-muted/20 p-4 gap-4 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+              <div className="relative w-full lg:max-w-sm">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                  placeholder="Buscar por nome..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
                     setPage(1);
                   }}
-                  className="h-10 px-3 text-[11px] font-bold text-muted-foreground hover:bg-muted/80 rounded-xl transition-colors col-span-2 sm:col-span-1"
-                >
-                  Limpar filtros
-                </Button>
-              )}
-            </div>
-          </div>
+                  className="pl-10 h-10 w-full rounded-xl border-border/40 bg-white focus-visible:ring-primary/20 transition-all text-sm"
+                />
+              </div>
 
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/10">
-                <TableRow className="border-border/40 hover:bg-transparent">
-                  <TableHead className="w-[80px] py-4 font-bold text-[11px] uppercase tracking-wider">
-                    Imagem
-                  </TableHead>
-                  <TableHead className="py-4 font-bold text-[11px] uppercase tracking-wider">
-                    Produto
-                  </TableHead>
-                  <TableHead className="w-[120px] py-4 font-bold text-[11px] uppercase tracking-wider">
-                    Preço
-                  </TableHead>
-                  <TableHead className="w-[140px] py-4 font-bold text-[11px] uppercase tracking-wider">
-                    Status
-                  </TableHead>
-                  <TableHead className="w-[80px] text-right py-4 font-bold text-[11px] uppercase tracking-wider">
-                    Ações
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: pageSize }).map((_, i) => (
-                    <TableRow key={i} className="border-border/40 animate-pulse">
-                      <TableCell colSpan={5} className="py-8">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-muted/50" />
-                          <div className="space-y-2 flex-1">
-                            <div className="h-4 w-1/3 rounded bg-muted/50" />
-                            <div className="h-3 w-1/4 rounded bg-muted/50" />
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                <Select
+                  value={filterStatus}
+                  onValueChange={(v) => {
+                    setFilterStatus(v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-[130px] h-10 rounded-xl border-border/40 bg-white text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <Filter className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+                      <span className="truncate">
+                        <SelectValue placeholder="Status" />
+                      </span>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/40 shadow-xl shadow-black/5">
+                    <SelectItem value="all">Todos Status</SelectItem>
+                    <SelectItem value="active">Ativos</SelectItem>
+                    <SelectItem value="inactive">Inativos</SelectItem>
+                    <SelectItem value="featured">Em destaque</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={filterDept || "all"}
+                  onValueChange={(v) => {
+                    setFilterDept(v === "all" ? "" : v);
+                    setFilterCat("");
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-full sm:w-[150px] h-10 rounded-xl border-border/40 bg-white text-xs sm:text-sm">
+                    <span className="truncate">
+                      <SelectValue placeholder="Depto" />
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/40 shadow-xl shadow-black/5">
+                    <SelectItem value="all">Todos Deptos</SelectItem>
+                    {departments.map((d: any) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={filterCat || "all"}
+                  onValueChange={(v) => {
+                    setFilterCat(v === "all" ? "" : v);
+                    setPage(1);
+                  }}
+                  disabled={!filterDept}
+                >
+                  <SelectTrigger className="w-full sm:w-[150px] h-10 rounded-xl border-border/40 bg-white text-xs sm:text-sm">
+                    <span className="truncate">
+                      <SelectValue placeholder={filterDept ? "Categoria" : "Escolha Depto"} />
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/40 shadow-xl shadow-black/5">
+                    <SelectItem value="all">Todas Categorias</SelectItem>
+                    {subcategories.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {(filterDept || filterCat || filterStatus !== "all" || search) && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setSearch("");
+                      setFilterDept("");
+                      setFilterCat("");
+                      setFilterStatus("all");
+                      setPage(1);
+                    }}
+                    className="h-10 px-3 text-[11px] font-bold text-muted-foreground hover:bg-muted/80 rounded-xl transition-colors col-span-2 sm:col-span-1"
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="border-border/40 hover:bg-transparent">
+                    <TableHead className="w-[80px] py-4 font-bold text-[11px] uppercase tracking-wider">
+                      Imagem
+                    </TableHead>
+                    <TableHead className="py-4 font-bold text-[11px] uppercase tracking-wider">
+                      Produto
+                    </TableHead>
+                    <TableHead className="w-[120px] py-4 font-bold text-[11px] uppercase tracking-wider">
+                      Preço
+                    </TableHead>
+                    <TableHead className="w-[140px] py-4 font-bold text-[11px] uppercase tracking-wider">
+                      Status
+                    </TableHead>
+                    <TableHead className="w-[80px] text-right py-4 font-bold text-[11px] uppercase tracking-wider">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    Array.from({ length: pageSize }).map((_, i) => (
+                      <TableRow key={i} className="border-border/40 animate-pulse">
+                        <TableCell colSpan={5} className="py-8">
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-xl bg-muted/50" />
+                            <div className="space-y-2 flex-1">
+                              <div className="h-4 w-1/3 rounded bg-muted/50" />
+                              <div className="h-3 w-1/4 rounded bg-muted/50" />
+                            </div>
                           </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : products.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-64 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="h-12 w-12 rounded-2xl bg-muted/30 flex items-center justify-center mb-2">
+                            <Search className="h-6 w-6 text-muted-foreground/40" />
+                          </div>
+                          <p className="font-bold text-foreground/80">Nenhum produto encontrado</p>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : products.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-64 text-center">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="h-12 w-12 rounded-2xl bg-muted/30 flex items-center justify-center mb-2">
-                          <Search className="h-6 w-6 text-muted-foreground/40" />
-                        </div>
-                        <p className="font-bold text-foreground/80">Nenhum produto encontrado</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  products.map((p: any) => (
-                    <ProductRow
-                      key={p.id}
-                      p={p}
-                      store={store}
-                      navigate={navigate}
-                      duplicateProduct={duplicateProduct}
-                      deleteProduct={deleteProduct}
-                      toggleStatus={toggleStatus}
-                    />
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    products.map((p: any) => (
+                      <ProductRow
+                        key={p.id}
+                        p={p}
+                        store={store}
+                        navigate={navigate}
+                        duplicateProduct={duplicateProduct}
+                        deleteProduct={deleteProduct}
+                        toggleStatus={toggleStatus}
+                      />
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-border/40">
-            {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="p-4 space-y-3 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="h-16 w-16 rounded-xl bg-muted/50" />
-                    <div className="space-y-2 flex-1">
-                      <div className="h-4 w-2/3 rounded bg-muted/50" />
-                      <div className="h-3 w-1/3 rounded bg-muted/50" />
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-border/40">
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="p-4 space-y-3 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="h-16 w-16 rounded-xl bg-muted/50" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 w-2/3 rounded bg-muted/50" />
+                        <div className="h-3 w-1/3 rounded bg-muted/50" />
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : products.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Search className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Nenhum produto encontrado</p>
                 </div>
-              ))
-            ) : products.length === 0 ? (
-              <div className="p-12 text-center">
-                <Search className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum produto encontrado</p>
-              </div>
-            ) : (
-              products.map((p: any) => (
-                <ProductMobileCard
-                  key={p.id}
-                  p={p}
-                  store={store}
-                  navigate={navigate}
-                  duplicateProduct={duplicateProduct}
-                  deleteProduct={deleteProduct}
-                  toggleStatus={toggleStatus}
-                />
-              ))
-            )}
-          </div>
-
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-4 md:px-6 bg-muted/10 border-t border-border/40 gap-4">
-              <div className="text-xs font-medium text-muted-foreground order-2 sm:order-1">
-                Mostrando{" "}
-                <span className="text-foreground">
-                  {Math.min(totalCount, (page - 1) * pageSize + 1)}
-                </span>{" "}
-                até <span className="text-foreground">{Math.min(totalCount, page * pageSize)}</span>{" "}
-                de <span className="text-foreground">{totalCount}</span> produtos
-              </div>
-
-              <div className="flex items-center gap-1 order-1 sm:order-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-lg"
-                  onClick={() => setPage(1)}
-                  disabled={page === 1}
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-lg"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <div className="flex items-center gap-1 px-2">
-                  <span className="text-xs font-bold text-foreground">{page}</span>
-                  <span className="text-xs text-muted-foreground">/</span>
-                  <span className="text-xs text-muted-foreground">{totalPages}</span>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-lg"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-lg"
-                  onClick={() => setPage(totalPages)}
-                  disabled={page === totalPages}
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(v) => {
-                    setPageSize(Number(v));
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px] ml-2 text-xs rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-lg">
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              ) : (
+                products.map((p: any) => (
+                  <ProductMobileCard
+                    key={p.id}
+                    p={p}
+                    store={store}
+                    navigate={navigate}
+                    duplicateProduct={duplicateProduct}
+                    deleteProduct={deleteProduct}
+                    toggleStatus={toggleStatus}
+                  />
+                ))
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+
+            {/* Paginação */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-4 md:px-6 bg-muted/10 border-t border-border/40 gap-4">
+                <div className="text-xs font-medium text-muted-foreground order-2 sm:order-1">
+                  Mostrando{" "}
+                  <span className="text-foreground">
+                    {Math.min(totalCount, (page - 1) * pageSize + 1)}
+                  </span>{" "}
+                  até{" "}
+                  <span className="text-foreground">{Math.min(totalCount, page * pageSize)}</span>{" "}
+                  de <span className="text-foreground">{totalCount}</span> produtos
+                </div>
+
+                <div className="flex items-center gap-1 order-1 sm:order-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-1 px-2">
+                    <span className="text-xs font-bold text-foreground">{page}</span>
+                    <span className="text-xs text-muted-foreground">/</span>
+                    <span className="text-xs text-muted-foreground">{totalPages}</span>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page === totalPages}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(v) => {
+                      setPageSize(Number(v));
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px] ml-2 text-xs rounded-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-lg">
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
 
@@ -729,7 +778,7 @@ function ProductActions({ p, store, navigate, duplicateProduct, deleteProduct }:
         <DropdownMenuSeparator className="bg-border/40" />
         <DropdownMenuItem
           className="rounded-lg gap-2 cursor-pointer font-medium text-sm text-destructive focus:text-destructive focus:bg-destructive/5"
-          onClick={() => deleteProduct(p.id)}
+          onClick={() => deleteProduct({ id: p.id, name: p.name })}
         >
           <Trash2 className="h-4 w-4" /> Excluir
         </DropdownMenuItem>

@@ -8,7 +8,7 @@ import { StorefrontPage } from "@/components/StorefrontPage";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { trackVisit } from "@/lib/analytics";
 
-const STORE_SLUG = "anaisa-store";
+const STORE_SLUG = import.meta.env.VITE_STORE_SLUG as string;
 
 export const Route = createFileRoute("/")({
   component: StoreRoot,

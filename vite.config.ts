@@ -183,5 +183,10 @@ export default defineConfig({
   },
   vite: {
     plugins: [analyticsDevPlugin()],
+    server: {
+      watch: {
+        ignored: ["**/.venv/**", "**/supabase/.branches/**", "**/supabase/.temp/**"],
+      },
+    },
   },
 });

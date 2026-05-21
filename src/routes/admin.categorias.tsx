@@ -38,6 +38,7 @@ type Category = {
 function CategoriesPage() {
   const { user } = useAuth();
   const [deptName, setDeptName] = useState("");
+  const [orderedDepts, setOrderedDepts] = useState<Category[]>([]);
 
   const { data: store } = useQuery({
     queryKey: ["my-store", user?.id],
@@ -50,24 +51,45 @@ function CategoriesPage() {
     queryKey: ["categories", store?.id],
     enabled: !!store,
     queryFn: async () =>
-      ((await supabase.from("categories").select("*").eq("store_id", store!.id).order("name"))
+      ((await supabase.from("categories").select("*").eq("store_id", store!.id).order("position"))
         .data ?? []) as Category[],
   });
 
-  const departments = (cats ?? [])
-    .filter((c) => !c.parent_id)
-    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  useEffect(() => {
+    const depts = (cats ?? []).filter((c) => !c.parent_id);
+    setOrderedDepts(depts);
+  }, [cats]);
+
   const childrenOf = (id: string) =>
-    (cats ?? [])
-      .filter((c) => c.parent_id === id)
-      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    (cats ?? []).filter((c) => c.parent_id === id).sort((a, b) => a.position - b.position);
+
+  const deptSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  async function handleDeptDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedDepts.findIndex((d) => d.id === active.id);
+    const newIndex = orderedDepts.findIndex((d) => d.id === over.id);
+    const newOrder = arrayMove(orderedDepts, oldIndex, newIndex);
+    setOrderedDepts(newOrder);
+    await Promise.all(
+      newOrder.map((dept, idx) =>
+        supabase.from("categories").update({ position: idx }).eq("id", dept.id),
+      ),
+    );
+  }
 
   async function addDepartment(e: React.FormEvent) {
     e.preventDefault();
     if (!deptName.trim() || !store) return;
-    const { error } = await supabase
-      .from("categories")
-      .insert({ store_id: store.id, name: deptName.trim(), parent_id: null });
+    const { error } = await supabase.from("categories").insert({
+      store_id: store.id,
+      name: deptName.trim(),
+      parent_id: null,
+      position: orderedDepts.length,
+    });
     if (error) toast.error(error.message);
     else {
       setDeptName("");
@@ -85,15 +107,12 @@ function CategoriesPage() {
       toast.error(error.message);
       return;
     }
-    // Re-salva posições em ordem alfabética para todas as subcategorias do departamento
-    const allSubs = [...childrenOf(parentId), ...(inserted ?? [])].sort((a, b) =>
-      a.name.localeCompare(b.name, "pt-BR"),
-    );
-    await Promise.all(
-      allSubs.map((sub, idx) =>
-        supabase.from("categories").update({ position: idx }).eq("id", sub.id),
-      ),
-    );
+    const currentSubs = childrenOf(parentId);
+    const newPosition = currentSubs.length;
+    await supabase
+      .from("categories")
+      .update({ position: newPosition })
+      .eq("id", (inserted ?? [])[0]?.id);
     refetch();
   }
 
@@ -117,7 +136,7 @@ function CategoriesPage() {
         <h1 className="text-2xl font-bold">Categorias</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Crie departamentos (ex: Masculino, Feminino) e adicione subcategorias dentro deles (ex:
-          Blusas, Shorts, Saias).
+          Blusas, Shorts, Saias). Arraste para reordenar.
         </p>
       </div>
 
@@ -133,21 +152,32 @@ function CategoriesPage() {
       </form>
 
       <div className="space-y-4">
-        {departments.length === 0 && (
+        {orderedDepts.length === 0 && (
           <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Nenhum departamento ainda.
           </p>
         )}
-        {departments.map((dept) => (
-          <DepartmentCard
-            key={dept.id}
-            dept={dept}
-            subs={childrenOf(dept.id)}
-            onAddSub={(name) => addSub(dept.id, name)}
-            onRemove={remove}
-            onRename={rename}
-          />
-        ))}
+        <DndContext
+          sensors={deptSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDeptDragEnd}
+        >
+          <SortableContext
+            items={orderedDepts.map((d) => d.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {orderedDepts.map((dept) => (
+              <SortableDepartmentCard
+                key={dept.id}
+                dept={dept}
+                subs={childrenOf(dept.id)}
+                onAddSub={(name) => addSub(dept.id, name)}
+                onRemove={remove}
+                onRename={rename}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );
@@ -219,25 +249,43 @@ function EditableRow({
   );
 }
 
+function SortableDepartmentCard(props: React.ComponentProps<typeof DepartmentCard>) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: props.dept.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <DepartmentCard {...props} dragHandle={{ attributes, listeners }} />
+    </div>
+  );
+}
+
 function DepartmentCard({
   dept,
   subs,
   onAddSub,
   onRemove,
   onRename,
+  dragHandle,
 }: {
   dept: Category;
   subs: Category[];
   onAddSub: (name: string) => Promise<void>;
   onRemove: (id: string) => void;
   onRename: (id: string, name: string) => void;
+  dragHandle?: { attributes: any; listeners: any };
 }) {
   const [val, setVal] = useState("");
   const [orderedSubs, setOrderedSubs] = useState<Category[]>([]);
 
-  // Sync when subs prop changes (after refetch): keep alphabetical order by default
+  // Sync when subs prop changes (after refetch): preserve DB order
   useEffect(() => {
-    setOrderedSubs([...subs].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
+    setOrderedSubs([...subs]);
   }, [subs]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -267,12 +315,27 @@ function DepartmentCard({
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
-      <EditableRow
-        name={dept.name}
-        textClass="text-lg font-semibold"
-        onSave={(v) => onRename(dept.id, v)}
-        onRemove={() => onRemove(dept.id)}
-      />
+      <div className="flex items-center gap-2">
+        {dragHandle && (
+          <button
+            {...dragHandle.attributes}
+            {...dragHandle.listeners}
+            type="button"
+            className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing shrink-0"
+            aria-label="Arrastar departamento"
+          >
+            <GripVertical className="h-5 w-5" />
+          </button>
+        )}
+        <div className="flex-1">
+          <EditableRow
+            name={dept.name}
+            textClass="text-lg font-semibold"
+            onSave={(v) => onRename(dept.id, v)}
+            onRemove={() => onRemove(dept.id)}
+          />
+        </div>
+      </div>
 
       <div className="mt-4 divide-y rounded-xl border border-border">
         {orderedSubs.length === 0 && (

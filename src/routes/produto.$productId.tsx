@@ -21,7 +21,7 @@ import {
 
 import { trackProductView } from "@/lib/analytics";
 
-const STORE_SLUG = "anaisa-store";
+const STORE_SLUG = import.meta.env.VITE_STORE_SLUG as string;
 
 export const Route = createFileRoute("/produto/$productId")({
   component: ProdutoRoot,

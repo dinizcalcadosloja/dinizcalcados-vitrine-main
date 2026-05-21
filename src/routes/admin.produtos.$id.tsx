@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { MultiImageUpload } from "@/components/image-upload";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MultiImageUpload, ImageUpload } from "@/components/image-upload";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ import {
   Settings,
   Tag,
   BadgeDollarSign,
+  CopyPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,6 +68,7 @@ function ProductEditor() {
   const [colorActive, setColorActive] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [varTypes, setVarTypes] = useState({ cores: true, tamanhos: true, numeracao: true });
 
   const {
     data: product,
@@ -412,6 +415,95 @@ function ProductEditor() {
             </CardContent>
           </Card>
 
+          {/* Grade e Variações */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" />
+                Grade de Cores e Tamanhos
+              </CardTitle>
+              <CardDescription>
+                Configure as variações disponíveis para este produto
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Passo 1: Possui variações? */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold">Este produto possui variações?</p>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="has_variations"
+                      checked={!form.has_variations}
+                      onChange={() => setForm({ ...form, has_variations: false })}
+                      className="accent-primary h-4 w-4"
+                    />
+                    <span className="text-sm">Não</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="has_variations"
+                      checked={!!form.has_variations}
+                      onChange={() => setForm({ ...form, has_variations: true })}
+                      className="accent-primary h-4 w-4"
+                    />
+                    <span className="text-sm">Sim</span>
+                  </label>
+                </div>
+              </div>
+
+              {!form.has_variations && (
+                <p className="text-sm text-muted-foreground italic">
+                  Produto simples sem variações.
+                </p>
+              )}
+
+              {!!form.has_variations && (
+                <div className="space-y-6">
+                  {/* Passo 2: Quais variações? */}
+                  <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+                    <p className="text-sm font-semibold">Quais variações deseja cadastrar?</p>
+                    <div className="flex flex-wrap gap-5">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <Checkbox
+                          checked={varTypes.cores}
+                          onCheckedChange={(c) => setVarTypes({ ...varTypes, cores: !!c })}
+                        />
+                        <span className="text-sm">Cores</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <Checkbox
+                          checked={varTypes.tamanhos}
+                          onCheckedChange={(c) => setVarTypes({ ...varTypes, tamanhos: !!c })}
+                        />
+                        <span className="text-sm">Tamanhos</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <Checkbox
+                          checked={varTypes.numeracao}
+                          onCheckedChange={(c) => setVarTypes({ ...varTypes, numeracao: !!c })}
+                        />
+                        <span className="text-sm">Numeração personalizada</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <VariantsEditor
+                    variants={variants}
+                    setVariants={setVariants}
+                    colorImages={colorImages}
+                    setColorImages={setColorImages}
+                    colorActive={colorActive}
+                    setColorActive={setColorActive}
+                    varTypes={varTypes}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Imagens */}
           <Card>
             <CardHeader>
@@ -419,52 +511,21 @@ function ProductEditor() {
                 <ImageIcon className="h-5 w-5 text-primary" />
                 Imagens do Produto
               </CardTitle>
-              <CardDescription>A primeira imagem será a capa da vitrine</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MultiImageUpload values={images} onChange={setImages} />
-            </CardContent>
-          </Card>
-
-          {/* Grade e Variações */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-primary" />
-                  Grade de Cores e Tamanhos
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="has_variations" className="text-xs font-normal">
-                    Possui variações?
-                  </Label>
-                  <Switch
-                    id="has_variations"
-                    checked={form.has_variations}
-                    onCheckedChange={(c) => setForm({ ...form, has_variations: c })}
-                  />
-                </div>
-              </CardTitle>
               <CardDescription>
                 {form.has_variations
-                  ? "Gerencie as cores e tamanhos disponíveis para este produto"
-                  : "Este produto será vendido como item único"}
+                  ? "Imagem de capa do produto (cada cor terá suas próprias fotos)"
+                  : "A primeira imagem será a capa da vitrine"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               {form.has_variations ? (
-                <VariantsEditor
-                  variants={variants}
-                  setVariants={setVariants}
-                  colorImages={colorImages}
-                  setColorImages={setColorImages}
-                  colorActive={colorActive}
-                  setColorActive={setColorActive}
+                <ImageUpload
+                  value={images[0] ?? null}
+                  onChange={(url) => setImages(url ? [url, ...images.slice(1)] : images.slice(1))}
+                  label="Capa do produto"
                 />
               ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  O produto será exibido sem opções de escolha para o cliente.
-                </p>
+                <MultiImageUpload values={images} onChange={setImages} />
               )}
             </CardContent>
           </Card>
@@ -621,6 +682,7 @@ function VariantsEditor({
   setColorImages,
   colorActive,
   setColorActive,
+  varTypes,
 }: {
   variants: Variant[];
   setVariants: (v: Variant[]) => void;
@@ -628,6 +690,7 @@ function VariantsEditor({
   setColorImages: (v: Record<string, string[]>) => void;
   colorActive: Record<string, boolean>;
   setColorActive: (v: Record<string, boolean>) => void;
+  varTypes: { cores: boolean; tamanhos: boolean; numeracao: boolean };
 }) {
   const [newColorAdded, setNewColorAdded] = useState<string | null>(null);
   const colorRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -684,6 +747,22 @@ function VariantsEditor({
 
   function toggleColorActive(color: string, active: boolean) {
     setColorActive({ ...colorActive, [color]: active });
+  }
+
+  function duplicateColor(color: string) {
+    let newName = `${color} (Cópia)`;
+    let counter = 2;
+    while (colors.includes(newName)) {
+      newName = `${color} (Cópia ${counter++})`;
+    }
+    const rows = variants.filter((v) => v.color === color);
+    const duplicatedRows = rows.map((v) => ({ ...v, id: undefined, color: newName }));
+    setVariants([...variants, ...duplicatedRows]);
+    setColorActive({ ...colorActive, [newName]: colorActive[color] ?? true });
+    if (colorImages[color]) {
+      setColorImages({ ...colorImages, [newName]: [...colorImages[color]] });
+    }
+    setNewColorAdded(newName);
   }
 
   function updateRow(target: Variant, patch: Partial<Variant>) {
@@ -764,6 +843,15 @@ function VariantsEditor({
                       type="button"
                       variant="ghost"
                       size="sm"
+                      onClick={() => duplicateColor(color)}
+                      title="Duplicar cor"
+                    >
+                      <CopyPlus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => removeColor(color)}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
@@ -774,87 +862,62 @@ function VariantsEditor({
               </div>
 
               <div className="p-4 space-y-6">
-                {/* Imagens da Cor */}
-                <div className="space-y-3">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
-                    Fotos desta cor
-                  </Label>
-                  <MultiImageUpload
-                    values={colorImages[color] ?? []}
-                    onChange={(urls) => {
-                      const next = { ...colorImages };
-                      if (urls.length) next[color] = urls;
-                      else delete next[color];
-                      setColorImages(next);
-                    }}
-                  />
-                </div>
-
-                <Separator />
-
-                {/* Tamanhos */}
-                <div className="space-y-4">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
-                    Grade de Tamanhos
-                  </Label>
-
-                  <div className="flex flex-wrap gap-2">
-                    {COMMON_SIZES.map((s) => {
-                      const active = sizeRows.some((r) => r.size === s);
-                      return (
-                        <Button
-                          key={s}
-                          type="button"
-                          variant={active ? "default" : "outline"}
-                          size="sm"
-                          className="min-w-[40px]"
-                          onClick={() => toggleSize(color, s)}
-                        >
-                          {s}
-                        </Button>
-                      );
-                    })}
+                {/* Imagens da Cor — visível só se "Cores" selecionado */}
+                {varTypes.cores && (
+                  <div className="space-y-3">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Fotos desta cor
+                    </Label>
+                    <MultiImageUpload
+                      values={colorImages[color] ?? []}
+                      onChange={(urls) => {
+                        const next = { ...colorImages };
+                        if (urls.length) next[color] = urls;
+                        else delete next[color];
+                        setColorImages(next);
+                      }}
+                    />
                   </div>
+                )}
 
-                  {sizeRows.length > 0 && (
+                {/* Separador só se há imagens E (tamanhos ou numeração) */}
+                {varTypes.cores && (varTypes.tamanhos || varTypes.numeracao) && <Separator />}
+
+                {/* Grade de Tamanhos — visível só se "Tamanhos" selecionado */}
+                {varTypes.tamanhos && (
+                  <div className="space-y-4">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Grade de Tamanhos
+                    </Label>
+
                     <div className="flex flex-wrap gap-2">
-                      {sizeRows.map((v, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
-                        >
-                          <span className="w-8 h-8 flex items-center justify-center rounded bg-muted text-xs font-bold">
-                            {v.size}
-                          </span>
+                      {COMMON_SIZES.map((s) => {
+                        const active = sizeRows.some((r) => r.size === s);
+                        return (
                           <Button
+                            key={s}
                             type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground"
-                            onClick={() => removeRow(v)}
+                            variant={active ? "default" : "outline"}
+                            size="sm"
+                            className="min-w-[40px]"
+                            onClick={() => toggleSize(color, s)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {s}
                           </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
-                  )}
 
-                  {numberingRows.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">Numeração Personalizada</p>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {numberingRows.map((v, i) => (
+                    {sizeRows.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {sizeRows.map((v, i) => (
                           <div
                             key={i}
                             className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
                           >
-                            <Input
-                              placeholder="Nº"
-                              value={v.numbering}
-                              className="h-8"
-                              onChange={(e) => updateRow(v, { numbering: e.target.value })}
-                            />
+                            <span className="w-8 h-8 flex items-center justify-center rounded bg-muted text-xs font-bold">
+                              {v.size}
+                            </span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -867,19 +930,56 @@ function VariantsEditor({
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full border-dashed border-2 hover:border-solid"
-                    onClick={() => addNumberingRow(color)}
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Adicionar numeração personalizada
-                  </Button>
-                </div>
+                {/* Numeração personalizada — visível só se "Numeração" selecionado */}
+                {varTypes.numeracao && (
+                  <div className="space-y-4">
+                    {numberingRows.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
+                          Numeração Personalizada
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {numberingRows.map((v, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
+                            >
+                              <Input
+                                placeholder="Nº"
+                                value={v.numbering}
+                                className="h-8"
+                                onChange={(e) => updateRow(v, { numbering: e.target.value })}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground"
+                                onClick={() => removeRow(v)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full border-dashed border-2 hover:border-solid"
+                      onClick={() => addNumberingRow(color)}
+                    >
+                      <Plus className="mr-1 h-4 w-4" /> Adicionar numeração personalizada
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           );
