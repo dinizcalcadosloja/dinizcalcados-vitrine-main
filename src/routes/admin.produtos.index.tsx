@@ -200,6 +200,12 @@ function ProductsList() {
   }
 
   async function duplicateProduct(product: any) {
+    // Buscar variantes completas e imagens de cor (não incluídas na query da listagem)
+    const [{ data: variantsFull }, { data: colorImagesFull }] = await Promise.all([
+      supabase.from("product_variants").select("*").eq("product_id", product.id),
+      supabase.from("product_color_images").select("*").eq("product_id", product.id),
+    ]);
+
     const { data: newProduct, error } = await supabase
       .from("products")
       .insert({
@@ -209,6 +215,8 @@ function ProductsList() {
         price: product.price,
         compare_at_price: product.compare_at_price,
         category_id: product.category_id,
+        has_variations: product.has_variations,
+        featured: false,
         active: false,
       })
       .select()
@@ -216,7 +224,7 @@ function ProductsList() {
 
     if (error) return toast.error(error.message);
 
-    // Copiar imagens
+    // Copiar imagens principais
     if (product.product_images?.length) {
       await supabase.from("product_images").insert(
         product.product_images.map((img: any) => ({
@@ -227,7 +235,32 @@ function ProductsList() {
       );
     }
 
-    toast.success("Produto duplicado");
+    // Copiar variantes (tamanhos, cores, numerações)
+    if (variantsFull?.length) {
+      await supabase.from("product_variants").insert(
+        variantsFull.map((v: any) => ({
+          product_id: newProduct.id,
+          size: v.size || null,
+          color: v.color || null,
+          numbering: v.numbering || null,
+          is_active: v.is_active ?? true,
+        })),
+      );
+    }
+
+    // Copiar imagens de cores
+    if (colorImagesFull?.length) {
+      await supabase.from("product_color_images").insert(
+        colorImagesFull.map((ci: any) => ({
+          product_id: newProduct.id,
+          color: ci.color,
+          image_url: ci.image_url,
+          position: ci.position,
+        })),
+      );
+    }
+
+    toast.success("Produto duplicado com sucesso!");
     refetch();
     navigate({ to: "/admin/produtos/$id", params: { id: newProduct.id } });
   }
