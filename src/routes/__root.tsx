@@ -71,17 +71,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Diniz Calçados" },
+      { title: "Diniz Calçados | Moda, Calçados e Acessórios" },
       {
         name: "description",
         content:
-          "Perfumes importados e nacionais, perfumes árabes, body splash, hidratantes e fragrâncias especiais.",
+          "Calçados, moda e acessórios para masculino, feminino e infantil. Estilo, qualidade e conforto para todos os momentos.",
       },
       { property: "og:title", content: "Diniz Calçados" },
       {
         property: "og:description",
         content:
-          "Perfumes importados e nacionais, perfumes árabes, body splash e fragrâncias especiais.",
+          "Calçados, moda e acessórios para masculino, feminino e infantil. Estilo e qualidade em cada passo.",
       },
       { property: "og:image", content: "https://dinizcalcados.com.br/preview.jpg" },
       { property: "og:url", content: "https://dinizcalcados.com.br" },
@@ -92,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "Diniz Calçados" },
       {
         name: "twitter:description",
-        content: "Perfumes importados, nacionais, árabes e body splash.",
+        content: "Calçados, moda e acessórios para toda a família.",
       },
       { name: "twitter:image", content: "https://dinizcalcados.com.br/preview.jpg" },
     ],
