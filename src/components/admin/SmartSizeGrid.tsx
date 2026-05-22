@@ -129,8 +129,7 @@ export function SmartSizeGrid({
       {/* Input manual */}
       <div className="space-y-1.5">
         <p className="text-xs text-muted-foreground">
-          Digite ou cole:{" "}
-          <code className="bg-muted px-1 rounded text-xs">35-44</code>
+          Digite ou cole: <code className="bg-muted px-1 rounded text-xs">35-44</code>
           {" · "}
           <code className="bg-muted px-1 rounded text-xs">35,36,37</code>
           {" · "}

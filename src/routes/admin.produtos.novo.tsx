@@ -665,11 +665,7 @@ function VariantsEditor({
 
                 {/* Tamanhos / Numeração — grade inteligente */}
                 {(varTypes.tamanhos || varTypes.numeracao) && (
-                  <SmartSizeGrid
-                    color={color}
-                    sizeRows={sizeRows}
-                    toggleSize={toggleSize}
-                  />
+                  <SmartSizeGrid color={color} sizeRows={sizeRows} toggleSize={toggleSize} />
                 )}
               </div>
             </div>
