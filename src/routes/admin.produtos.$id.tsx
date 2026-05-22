@@ -46,6 +46,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { SmartSizeGrid } from "@/components/admin/SmartSizeGrid";
 
 export const Route = createFileRoute("/admin/produtos/$id")({
   component: ProductEditor,
@@ -478,17 +479,12 @@ function ProductEditor() {
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer select-none">
                         <Checkbox
-                          checked={varTypes.tamanhos}
-                          onCheckedChange={(c) => setVarTypes({ ...varTypes, tamanhos: !!c })}
+                          checked={varTypes.tamanhos || varTypes.numeracao}
+                          onCheckedChange={(c) =>
+                            setVarTypes({ ...varTypes, tamanhos: !!c, numeracao: !!c })
+                          }
                         />
-                        <span className="text-sm">Tamanhos</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <Checkbox
-                          checked={varTypes.numeracao}
-                          onCheckedChange={(c) => setVarTypes({ ...varTypes, numeracao: !!c })}
-                        />
-                        <span className="text-sm">Numeração personalizada</span>
+                        <span className="text-sm">Tamanhos / Numeração</span>
                       </label>
                     </div>
                   </div>
@@ -883,105 +879,16 @@ function VariantsEditor({
                   </div>
                 )}
 
-                {/* Separador só se há imagens E (tamanhos ou numeração) */}
+                {/* Separador só se há imagens E tamanhos/numeração */}
                 {varTypes.cores && (varTypes.tamanhos || varTypes.numeracao) && <Separator />}
 
-                {/* Grade de Tamanhos — visível só se "Tamanhos" selecionado */}
-                {varTypes.tamanhos && (
-                  <div className="space-y-4">
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
-                      Grade de Tamanhos
-                    </Label>
-
-                    <div className="flex flex-wrap gap-2">
-                      {COMMON_SIZES.map((s) => {
-                        const active = sizeRows.some((r) => r.size === s);
-                        return (
-                          <Button
-                            key={s}
-                            type="button"
-                            variant={active ? "default" : "outline"}
-                            size="sm"
-                            className="min-w-[40px]"
-                            onClick={() => toggleSize(color, s)}
-                          >
-                            {s}
-                          </Button>
-                        );
-                      })}
-                    </div>
-
-                    {sizeRows.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {sizeRows.map((v, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
-                          >
-                            <span className="w-8 h-8 flex items-center justify-center rounded bg-muted text-xs font-bold">
-                              {v.size}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground"
-                              onClick={() => removeRow(v)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Numeração personalizada — visível só se "Numeração" selecionado */}
-                {varTypes.numeracao && (
-                  <div className="space-y-4">
-                    {numberingRows.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
-                          Numeração Personalizada
-                        </p>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {numberingRows.map((v, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/10"
-                            >
-                              <Input
-                                placeholder="Nº"
-                                value={v.numbering}
-                                className="h-8"
-                                onChange={(e) => updateRow(v, { numbering: e.target.value })}
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground"
-                                onClick={() => removeRow(v)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="w-full border-dashed border-2 hover:border-solid"
-                      onClick={() => addNumberingRow(color)}
-                    >
-                      <Plus className="mr-1 h-4 w-4" /> Adicionar numeração personalizada
-                    </Button>
-                  </div>
+                {/* Tamanhos / Numeração — grade inteligente */}
+                {(varTypes.tamanhos || varTypes.numeracao) && (
+                  <SmartSizeGrid
+                    color={color}
+                    sizeRows={sizeRows}
+                    toggleSize={toggleSize}
+                  />
                 )}
               </div>
             </div>
