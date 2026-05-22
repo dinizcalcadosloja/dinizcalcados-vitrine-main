@@ -266,9 +266,12 @@ function NewProduct() {
               </div>
 
               {!form.has_variations && (
-                <p className="text-sm text-muted-foreground italic">
-                  Produto simples sem variações.
-                </p>
+                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 w-fit">
+                  <span className="text-green-600 text-sm">✓</span>
+                  <span className="text-sm text-green-700 font-medium">
+                    Produto simples (sem variações)
+                  </span>
+                </div>
               )}
 
               {!!form.has_variations && (

@@ -104,7 +104,7 @@ function AdminLayout() {
             </div>
           )}
           <span className="font-black tracking-tighter text-foreground uppercase text-sm">
-            {store?.name ?? "Anaisa Store"}
+            {store?.name ?? "Diniz Calçados"}
           </span>
         </Link>
       </div>
@@ -139,7 +139,7 @@ function AdminLayout() {
         <div className="rounded-2xl bg-muted/50 p-4 border border-border/50">
           {store && (
             <a
-              href="https://www.anaisastore.com.br"
+              href="https://www.dinizcalcados.com.br"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between group mb-4"
@@ -147,7 +147,7 @@ function AdminLayout() {
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-foreground">Sua Loja</span>
                 <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                  anaisastore.com.br
+                  dinizcalcados.com.br
                 </span>
               </div>
               <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center border border-border group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-sm">
@@ -190,7 +190,7 @@ function AdminLayout() {
               <Store className="h-4 w-4 text-muted-foreground" />
             </div>
           )}
-          <span>{store?.name ?? "Anaisa Store"}</span>
+          <span>{store?.name ?? "Diniz Calçados"}</span>
         </Link>
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>

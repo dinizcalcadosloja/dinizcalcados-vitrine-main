@@ -1,13 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "anaisa-vitrine-main",
+  "name": "dinizcalcados-vitrine-main",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "main": "src/server.ts",
   // "routes": [
-  //   { "pattern": "anaisastore.com.br", "custom_domain": true },
-  //   { "pattern": "www.anaisastore.com.br", "custom_domain": true },
+  //   { "pattern": "dinizcalcados.com.br", "custom_domain": true },
+  //   { "pattern": "www.dinizcalcados.com.br", "custom_domain": true },
   // ],
   "kv_namespaces": [
     {

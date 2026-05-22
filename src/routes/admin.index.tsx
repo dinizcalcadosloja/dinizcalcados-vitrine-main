@@ -240,11 +240,11 @@ function AdminHome() {
             </Badge>
             <a
               className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-              href="https://www.anaisastore.com.br"
+              href="https://www.dinizcalcados.com.br"
               target="_blank"
               rel="noreferrer"
             >
-              www.anaisastore.com.br
+              www.dinizcalcados.com.br
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
