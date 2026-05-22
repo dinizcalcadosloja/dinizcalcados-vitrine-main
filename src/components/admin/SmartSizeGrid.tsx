@@ -61,20 +61,24 @@ function sortSizes(sizes: string[]): string[] {
 function parseSizeInput(input: string): string[] {
   const trimmed = input.trim();
   if (!trimmed) return [];
-  // Intervalo numérico: 35-44 ou 35–44
+  // Intervalo numérico: 35-44, 35–44 ou até invertido 44-35
   const rangeMatch = trimmed.match(/^(\d+)\s*[-–]\s*(\d+)$/);
   if (rangeMatch) {
-    const start = parseInt(rangeMatch[1], 10);
-    const end = parseInt(rangeMatch[2], 10);
-    if (!isNaN(start) && !isNaN(end) && start <= end && end - start <= 50) {
+    let start = parseInt(rangeMatch[1], 10);
+    let end = parseInt(rangeMatch[2], 10);
+    if (start > end) [start, end] = [end, start]; // aceita intervalo invertido
+    if (!isNaN(start) && !isNaN(end) && end - start <= 50) {
       return Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
     }
   }
-  // Separado por vírgula ou ponto-e-vírgula
-  return trimmed
+  // Separado por vírgula ou ponto-e-vírgula — ordena numéricos em ascendente
+  const parts = trimmed
     .split(/[,;]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+  const allNumeric = parts.every((s) => /^\d+$/.test(s));
+  if (allNumeric) return parts.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  return parts;
 }
 
 export function SmartSizeGrid({
@@ -198,9 +202,9 @@ export function SmartSizeGrid({
             >
               {size}
               <span className="text-xs opacity-75">✓</span>
-                <X className="h-3 w-3 opacity-60" />
-              </button>
-            ))}
+              <X className="h-3 w-3 opacity-60" />
+            </button>
+          ))}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">Nenhum tamanho selecionado</p>
