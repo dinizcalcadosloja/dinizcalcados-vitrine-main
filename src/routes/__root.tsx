@@ -84,6 +84,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Calçados, moda e acessórios para masculino, feminino e infantil. Estilo e qualidade em cada passo.",
       },
       { property: "og:image", content: "https://dinizcalcados.com.br/preview.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { property: "og:url", content: "https://dinizcalcados.com.br" },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Diniz Calçados" },
