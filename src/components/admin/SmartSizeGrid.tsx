@@ -28,6 +28,36 @@ const SIZE_PRESETS: Record<"calcados" | "roupas", { label: string; sizes: string
   ],
 };
 
+const CLOTHES_ORDER = ["PP", "P", "M", "G", "GG", "XG", "XGG", "EG", "EXG", "Único"];
+
+function sortSizes(sizes: string[]): string[] {
+  const allNumeric = sizes.every((s) => /^\d+([.,]\d+)?$/.test(s));
+  if (allNumeric) {
+    return [...sizes].sort((a, b) => parseFloat(a) - parseFloat(b));
+  }
+  const clothesSet = new Set(CLOTHES_ORDER);
+  const allClothes = sizes.every((s) => clothesSet.has(s));
+  if (allClothes) {
+    return [...sizes].sort(
+      (a, b) => (CLOTHES_ORDER.indexOf(a) ?? 99) - (CLOTHES_ORDER.indexOf(b) ?? 99),
+    );
+  }
+  // Misto: numéricos primeiro em ordem crescente, depois os demais
+  return [...sizes].sort((a, b) => {
+    const na = parseFloat(a);
+    const nb = parseFloat(b);
+    const aNum = !isNaN(na);
+    const bNum = !isNaN(nb);
+    if (aNum && bNum) return na - nb;
+    if (aNum) return -1;
+    if (bNum) return 1;
+    const ai = CLOTHES_ORDER.indexOf(a);
+    const bi = CLOTHES_ORDER.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    return a.localeCompare(b);
+  });
+}
+
 function parseSizeInput(input: string): string[] {
   const trimmed = input.trim();
   if (!trimmed) return [];
@@ -159,17 +189,15 @@ export function SmartSizeGrid({
       {/* Chips selecionados */}
       {selectedSizes.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {sizeRows
-            .filter((r) => r.size)
-            .map((v, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => toggleSize(color, v.size)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors"
-              >
-                {v.size}
-                <span className="text-xs opacity-75">✓</span>
+          {sortSizes(sizeRows.filter((r) => r.size).map((r) => r.size)).map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => toggleSize(color, size)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors"
+            >
+              {size}
+              <span className="text-xs opacity-75">✓</span>
                 <X className="h-3 w-3 opacity-60" />
               </button>
             ))}
