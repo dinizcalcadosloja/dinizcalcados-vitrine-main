@@ -13,7 +13,6 @@
     {
       "binding": "ANALYTICS_KV",
       "id": "9c301ecc6c8240089147bc2a4366fd2e",
-      "preview_id": "REPLACE_WITH_YOUR_KV_PREVIEW_NAMESPACE_ID",
     },
   ],
 }
