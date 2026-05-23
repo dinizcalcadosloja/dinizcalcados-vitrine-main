@@ -562,6 +562,16 @@ function VariantsEditor({
     }
   }
 
+  function addSizes(color: string, sizes: string[]) {
+    const existingSizes = new Set(
+      variants.filter((v) => v.color === color && v.size).map((v) => v.size),
+    );
+    const newRows = sizes
+      .filter((s) => !existingSizes.has(s))
+      .map((s) => ({ color, size: s, numbering: "" }));
+    if (newRows.length) setVariants([...variants, ...newRows]);
+  }
+
   function addNumberingRow(color: string) {
     setVariants([...variants, { color, size: "", numbering: "" }]);
   }
@@ -665,7 +675,7 @@ function VariantsEditor({
 
                 {/* Tamanhos / Numeração — grade inteligente */}
                 {(varTypes.tamanhos || varTypes.numeracao) && (
-                  <SmartSizeGrid color={color} sizeRows={sizeRows} toggleSize={toggleSize} />
+                  <SmartSizeGrid color={color} sizeRows={sizeRows} toggleSize={toggleSize} addSizes={addSizes} />
                 )}
               </div>
             </div>
