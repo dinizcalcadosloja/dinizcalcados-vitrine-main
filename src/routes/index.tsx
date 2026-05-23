@@ -11,6 +11,11 @@ import { trackVisit } from "@/lib/analytics";
 const STORE_SLUG = import.meta.env.VITE_STORE_SLUG as string;
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    dept: (search.dept as string | undefined) ?? undefined,
+    cat: (search.cat as string | undefined) ?? undefined,
+    brand: (search.brand as string | undefined) ?? undefined,
+  }),
   component: StoreRoot,
 });
 

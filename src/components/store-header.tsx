@@ -14,6 +14,7 @@ import {
   Search,
   LayoutGrid,
   ChevronRight,
+  ChevronDown,
   ArrowLeft,
   Sparkles,
   User as UserIcon,
@@ -50,6 +51,8 @@ export function StoreHeader({ store }: { store: any }) {
     setActiveDept,
     activeCat,
     setActiveCat,
+    activeBrand,
+    setActiveBrand,
   } = useFilterMenu();
   const { setIsOpen: openSearchMenu } = useSearchMenu();
   const navigate = useNavigate();
@@ -74,6 +77,8 @@ export function StoreHeader({ store }: { store: any }) {
   const [drawerLevel, setDrawerLevel] = useState<DrawerLevel>("departments");
   const [drawerDept, setDrawerDept] = useState<Category | null>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
+  // Which subcats have their brand list expanded inline in the mobile panel
+  const [expandedSubcats, setExpandedSubcats] = useState<Set<string>>(new Set());
 
   const drawerSubcats = useMemo(
     () => (drawerDept ? categories.filter((c) => c.parent_id === drawerDept.id) : []),
@@ -86,6 +91,7 @@ export function StoreHeader({ store }: { store: any }) {
       const t = setTimeout(() => {
         setDrawerLevel("departments");
         setDrawerDept(null);
+        setExpandedSubcats(new Set());
       }, 300);
       return () => clearTimeout(t);
     }
@@ -102,6 +108,7 @@ export function StoreHeader({ store }: { store: any }) {
   function selectDept(deptId: string | null) {
     setActiveDept(deptId);
     setActiveCat(null);
+    setActiveBrand(null);
     setCategoryMenuOpen(false);
     navigateToStorefront();
   }
@@ -109,8 +116,26 @@ export function StoreHeader({ store }: { store: any }) {
   function selectSubcat(deptId: string, catId: string | null) {
     setActiveDept(deptId);
     setActiveCat(catId);
+    setActiveBrand(null);
     setCategoryMenuOpen(false);
     navigateToStorefront();
+  }
+
+  function selectBrand(deptId: string, catId: string, brandId: string) {
+    setActiveDept(deptId);
+    setActiveCat(catId);
+    setActiveBrand(brandId);
+    setCategoryMenuOpen(false);
+    navigateToStorefront();
+  }
+
+  function toggleSubcatExpand(subcatId: string) {
+    setExpandedSubcats((prev) => {
+      const next = new Set(prev);
+      if (next.has(subcatId)) next.delete(subcatId);
+      else next.add(subcatId);
+      return next;
+    });
   }
 
   function openWhatsApp() {
@@ -333,26 +358,77 @@ export function StoreHeader({ store }: { store: any }) {
                         Subcategorias
                       </p>
                       <nav className="space-y-1" aria-label="Subcategorias">
+                        {/* "Todas" — selects the department itself */}
                         <button
                           onClick={() => drawerDept && selectSubcat(drawerDept.id, null)}
                           className={`${btnBase} ${
-                            activeDept === drawerDept?.id && !activeCat ? activeBtn : inactiveBtn
+                            activeDept === drawerDept?.id && !activeCat && !activeBrand
+                              ? activeBtn
+                              : inactiveBtn
                           }`}
                         >
                           <LayoutGrid className="h-4 w-4 opacity-70 shrink-0" />
                           <span className="flex-1 text-left">Todas</span>
                         </button>
 
-                        {drawerSubcats.map((c) => (
-                          <button
-                            key={c.id}
-                            onClick={() => drawerDept && selectSubcat(drawerDept.id, c.id)}
-                            className={`${btnBase} ${activeCat === c.id ? activeBtn : inactiveBtn}`}
-                          >
-                            {getCategoryIcon(c.name)}
-                            <span className="flex-1 text-left">{c.name}</span>
-                          </button>
-                        ))}
+                        {drawerSubcats.map((c) => {
+                          const brands = categories.filter((b) => b.parent_id === c.id);
+                          const hasBrands = brands.length > 0;
+                          const isExpanded = expandedSubcats.has(c.id);
+                          const isSubcatActive =
+                            (activeCat === c.id && !activeBrand) ||
+                            brands.some((b) => b.id === activeBrand);
+
+                          return (
+                            <div key={c.id}>
+                              <div className="flex items-center gap-1">
+                                {/* Subcat name button — selects this subcat (shows all brands under it) */}
+                                <button
+                                  onClick={() => drawerDept && selectSubcat(drawerDept.id, c.id)}
+                                  className={`${btnBase} flex-1 ${isSubcatActive ? activeBtn : inactiveBtn}`}
+                                >
+                                  {getCategoryIcon(c.name)}
+                                  <span className="flex-1 text-left">{c.name}</span>
+                                </button>
+
+                                {/* Expand/collapse toggle for brands */}
+                                {hasBrands && (
+                                  <button
+                                    onClick={() => toggleSubcatExpand(c.id)}
+                                    className="flex-none flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                    aria-label={isExpanded ? "Recolher marcas" : "Expandir marcas"}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Inline brand list */}
+                              {hasBrands && isExpanded && (
+                                <div className="ml-7 mt-0.5 space-y-0.5 animate-in fade-in duration-150">
+                                  {brands.map((b) => (
+                                    <button
+                                      key={b.id}
+                                      onClick={() =>
+                                        drawerDept && selectBrand(drawerDept.id, c.id, b.id)
+                                      }
+                                      className={`${btnBase} text-xs py-2 ${
+                                        activeBrand === b.id ? activeBtn : inactiveBtn
+                                      }`}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0" />
+                                      <span className="flex-1 text-left">{b.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </nav>
                     </div>
                   </div>
@@ -379,7 +455,11 @@ export function StoreHeader({ store }: { store: any }) {
                 <Search className="h-5 w-5" />
               </Button>
               {/* Desktop only: logo + store name */}
-              <Link to="/" className="hidden md:flex items-center gap-3 group min-w-0">
+              <Link
+                to="/"
+                search={{ dept: undefined, cat: undefined, brand: undefined }}
+                className="hidden md:flex items-center gap-3 group min-w-0"
+              >
                 {store.logo_url ? (
                   <img
                     src={store.logo_url}
@@ -400,6 +480,7 @@ export function StoreHeader({ store }: { store: any }) {
             {/* ── Center: logo avatar (mobile only, truly centered via absolute) ── */}
             <Link
               to="/"
+              search={{ dept: undefined, cat: undefined, brand: undefined }}
               className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center group"
               aria-label={store.name}
             >

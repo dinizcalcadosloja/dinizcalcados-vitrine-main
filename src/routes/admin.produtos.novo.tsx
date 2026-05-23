@@ -95,9 +95,24 @@ function NewProduct() {
     },
   });
 
-  const [deptId, setDeptId] = useState("");
-  const departments = (cats ?? []).filter((c: any) => !c.parent_id);
-  const subcategories = (cats ?? []).filter((c: any) => c.parent_id === deptId);
+  // Build flat depth-first list of all categories for the tree select
+  function buildFlatCatTree(
+    all: any[],
+    parentId: string | null = null,
+    depth = 0,
+  ): Array<{ id: string; name: string; depth: number }> {
+    return all
+      .filter((c) => c.parent_id === parentId)
+      .flatMap((c) => [
+        { id: c.id, name: c.name, depth },
+        ...buildFlatCatTree(all, c.id, depth + 1),
+      ]);
+  }
+  const flatCats = buildFlatCatTree(cats ?? []);
+
+  const [selectedDeptId, setSelectedDeptId] = useState("");
+  const depts = (cats ?? []).filter((c: any) => !c.parent_id);
+  const flatSubcats = selectedDeptId ? buildFlatCatTree(cats ?? [], selectedDeptId, 0) : [];
 
   async function create() {
     if (!store) return;
@@ -383,18 +398,23 @@ function NewProduct() {
               <div className="space-y-2">
                 <Label>Departamento</Label>
                 <Select
-                  value={deptId || "none"}
+                  value={selectedDeptId || "none"}
                   onValueChange={(v) => {
-                    setDeptId(v === "none" ? "" : v);
+                    setSelectedDeptId(v === "none" ? "" : v);
                     setForm({ ...form, category_id: "" });
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder="Selecione um departamento">
+                      {selectedDeptId
+                        ? (depts.find((d) => d.id === selectedDeptId)?.name ??
+                          "Selecione um departamento")
+                        : "Selecione um departamento"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem departamento</SelectItem>
-                    {departments.map((d: any) => (
+                    {depts.map((d) => (
                       <SelectItem key={d.id} value={d.id}>
                         {d.name}
                       </SelectItem>
@@ -402,26 +422,32 @@ function NewProduct() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select
-                  value={form.category_id || "none"}
-                  onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? "" : v })}
-                  disabled={!deptId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={deptId ? "Selecione" : "Escolha um departamento"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem categoria</SelectItem>
-                    {subcategories.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {selectedDeptId && (
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <Select
+                    value={form.category_id || "none"}
+                    onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? "" : v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma categoria">
+                        {form.category_id && form.category_id !== "none"
+                          ? (flatSubcats.find((c) => c.id === form.category_id)?.name ??
+                            "Selecione uma categoria")
+                          : "Selecione uma categoria"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem categoria</SelectItem>
+                      {flatSubcats.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {"\u00a0\u00a0".repeat(c.depth) + (c.depth > 0 ? "└\u00a0" : "") + c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </CardContent>
           </Card>
 

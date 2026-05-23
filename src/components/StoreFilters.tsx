@@ -13,6 +13,8 @@ interface StoreFiltersProps {
   setActiveDept: (id: string | null) => void;
   activeCat: string | null;
   setActiveCat: (id: string | null) => void;
+  activeBrand: string | null;
+  setActiveBrand: (id: string | null) => void;
 }
 
 export function StoreFilters({
@@ -21,11 +23,18 @@ export function StoreFilters({
   setActiveDept,
   activeCat,
   setActiveCat,
+  activeBrand,
+  setActiveBrand,
 }: StoreFiltersProps) {
   const departments = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
   const subcats = useMemo(
     () => categories.filter((c) => c.parent_id === activeDept),
     [categories, activeDept],
+  );
+  // Brands = children of the selected subcategory
+  const brands = useMemo(
+    () => (activeCat ? categories.filter((c) => c.parent_id === activeCat) : []),
+    [categories, activeCat],
   );
 
   const deptScrollRef = useRef<HTMLDivElement>(null);
@@ -67,6 +76,7 @@ export function StoreFilters({
                 onClick={() => {
                   setActiveDept(null);
                   setActiveCat(null);
+                  setActiveBrand(null);
                 }}
                 className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 whitespace-nowrap ${
                   !activeDept
@@ -83,6 +93,7 @@ export function StoreFilters({
                   onClick={() => {
                     setActiveDept(d.id);
                     setActiveCat(null);
+                    setActiveBrand(null);
                   }}
                   className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 whitespace-nowrap ${
                     activeDept === d.id
@@ -101,19 +112,25 @@ export function StoreFilters({
           {activeDept && subcats.length > 0 && (
             <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-none pb-1 animate-in fade-in slide-in-from-top-2 duration-300">
               <button
-                onClick={() => setActiveCat(null)}
+                onClick={() => {
+                  setActiveCat(null);
+                  setActiveBrand(null);
+                }}
                 className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
                   !activeCat
                     ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200 scale-105"
                     : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
                 }`}
               >
-                Todas Categorias
+                Todas
               </button>
               {subcats.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => setActiveCat(c.id)}
+                  onClick={() => {
+                    setActiveCat(c.id);
+                    setActiveBrand(null);
+                  }}
                   className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all whitespace-nowrap ${
                     activeCat === c.id
                       ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200 scale-105"
@@ -121,6 +138,35 @@ export function StoreFilters({
                   }`}
                 >
                   {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Brand chips — 3rd level (desktop only) */}
+          {activeCat && brands.length > 0 && (
+            <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-none pb-1 animate-in fade-in slide-in-from-top-2 duration-300">
+              <button
+                onClick={() => setActiveBrand(null)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${
+                  !activeBrand
+                    ? "bg-slate-700 text-white shadow-sm scale-105"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                }`}
+              >
+                Todas as marcas
+              </button>
+              {brands.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => setActiveBrand(b.id)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all whitespace-nowrap ${
+                    activeBrand === b.id
+                      ? "bg-slate-700 text-white shadow-sm scale-105"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                  }`}
+                >
+                  {b.name}
                 </button>
               ))}
             </div>

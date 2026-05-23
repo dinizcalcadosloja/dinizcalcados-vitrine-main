@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { useStore } from "@/lib/store-context";
 import { useSearchMenu } from "@/lib/search-context";
 import { useFilterMenu } from "@/lib/filter-context";
+import { getDescendantIds } from "@/lib/filter-context";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,17 +31,20 @@ export function StorefrontPage() {
   const [q, setQ] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const { isOpen: isSearchOpen, setIsOpen: setIsSearchOpen } = useSearchMenu();
-  const { activeDept, setActiveDept, activeCat, setActiveCat } = useFilterMenu();
+  const { activeDept, setActiveDept, activeCat, setActiveCat, activeBrand, setActiveBrand } =
+    useFilterMenu();
+  const search = useSearch({ from: "/" });
   const [viewAllCategory, setViewAllCategory] = useState<{ id: string; name: string } | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const scrollContainerRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Reset filters to "Todos" whenever the storefront page mounts
+  // Initialize filters from URL search params on mount (breadcrumb navigation)
   useEffect(() => {
-    setActiveDept(null);
-    setActiveCat(null);
+    setActiveDept(search.dept ?? null);
+    setActiveCat(search.cat ?? null);
+    setActiveBrand(search.brand ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -125,20 +129,22 @@ export function StorefrontPage() {
   });
 
   const departments = (cats as any[]).filter((c) => !c.parent_id);
-  const subcats = (cats as any[]).filter((c) => c.parent_id === activeDept);
-  const subcatIds = useMemo(() => new Set(subcats.map((c) => c.id)), [subcats]);
+
+  // Resolve the deepest active filter and compute allowed category IDs recursively
+  const allowedCatIds = useMemo(() => {
+    const allCats = cats as any[];
+    const leafId = activeBrand ?? activeCat ?? activeDept;
+    if (!leafId) return null;
+    return new Set(getDescendantIds(leafId, allCats));
+  }, [cats, activeBrand, activeCat, activeDept]);
 
   const filtered = useMemo(() => {
     return products.filter((p: any) => {
-      if (activeCat) {
-        if (p.category_id !== activeCat) return false;
-      } else if (activeDept) {
-        if (!subcatIds.has(p.category_id)) return false;
-      }
+      if (allowedCatIds && !allowedCatIds.has(p.category_id)) return false;
       if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
-  }, [products, q, activeCat, activeDept, subcatIds]);
+  }, [products, q, allowedCatIds]);
 
   const productsByCategory = useMemo(() => {
     const grouped = new Map<string, any[]>();
@@ -346,6 +352,7 @@ export function StorefrontPage() {
                               setActiveDept(c.id);
                               setActiveCat(null);
                             }
+                            setActiveBrand(null);
                             setIsSearchOpen(false);
                           }}
                           className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-50 transition-colors text-left"
@@ -378,6 +385,8 @@ export function StorefrontPage() {
             setActiveDept={setActiveDept}
             activeCat={activeCat}
             setActiveCat={setActiveCat}
+            activeBrand={activeBrand}
+            setActiveBrand={setActiveBrand}
           />
 
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
@@ -396,7 +405,7 @@ export function StorefrontPage() {
             </div>
 
             {/* Featured Carousel */}
-            {featured.length > 0 && !q && !activeCat && !activeDept && (
+            {featured.length > 0 && !q && !activeCat && !activeDept && !activeBrand && (
               <section className="mb-20">
                 <div className="mb-8 flex items-end justify-between px-2 sm:px-0">
                   <div>
@@ -460,6 +469,7 @@ export function StorefrontPage() {
                       setQ("");
                       setActiveCat(null);
                       setActiveDept(null);
+                      setActiveBrand(null);
                     }}
                   >
                     Limpar todos os filtros

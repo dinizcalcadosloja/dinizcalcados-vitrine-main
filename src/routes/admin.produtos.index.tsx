@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { getDescendantIds } from "@/lib/filter-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,17 +139,13 @@ function ProductsList() {
       if (filterStatus === "featured") query = query.eq("featured", true);
 
       if (filterCat) {
-        query = query.eq("category_id", filterCat);
+        // inclui o próprio filterCat e todos os seus descendentes
+        const ids = getDescendantIds(filterCat, categories ?? []);
+        query = query.in("category_id", ids);
       } else if (filterDept) {
-        // Para filtrar por depto (parent_id) no servidor, precisaríamos de um join ou subquery
-        // Como o Supabase permite filtros em relações, se category_id tivesse a relação carregada
-        // mas aqui vamos manter o filtro de depto local por enquanto ou simplificar
-        const catIds = (categories ?? [])
-          .filter((c: any) => c.parent_id === filterDept)
-          .map((c: any) => c.id);
-        if (catIds.length > 0) {
-          query = query.in("category_id", catIds);
-        }
+        // inclui o próprio depto e todos os descendentes (subcats + marcas)
+        const ids = getDescendantIds(filterDept, categories ?? []);
+        query = query.in("category_id", ids);
       }
 
       const from = (page - 1) * pageSize;
@@ -173,7 +170,15 @@ function ProductsList() {
 
   const subcategories = useMemo(() => {
     if (!filterDept) return [];
-    return (categories ?? []).filter((c: any) => c.parent_id === filterDept);
+    function flatTree(
+      parentId: string,
+      depth: number,
+    ): Array<{ id: string; name: string; depth: number }> {
+      return (categories ?? [])
+        .filter((c: any) => c.parent_id === parentId)
+        .flatMap((c: any) => [{ id: c.id, name: c.name, depth }, ...flatTree(c.id, depth + 1)]);
+    }
+    return flatTree(filterDept, 0);
   }, [categories, filterDept]);
 
   // Os produtos já vêm filtrados do backend agora
@@ -417,7 +422,7 @@ function ProductsList() {
                     <SelectItem value="all">Todas Categorias</SelectItem>
                     {subcategories.map((c: any) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.name}
+                        {"\u00a0\u00a0".repeat(c.depth) + (c.depth > 0 ? "└\u00a0" : "") + c.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

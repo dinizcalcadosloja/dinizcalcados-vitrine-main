@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { useCart, buildWhatsappMessage, whatsappLink } from "@/lib/cart";
 import { toast } from "sonner";
-import { ArrowLeft, ShoppingBag, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, ShoppingBag, MessageCircle, X, ChevronRight } from "lucide-react";
 import { colorToCss } from "@/lib/color-map";
 import {
   AlertDialog,
@@ -46,6 +46,29 @@ function ProductPage() {
       return data;
     },
   });
+
+  const { data: cats } = useQuery({
+    queryKey: ["public-cats", store?.id],
+    enabled: !!store?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, parent_id")
+        .eq("store_id", store!.id);
+      return data ?? [];
+    },
+  });
+
+  const catBreadcrumb = useMemo(() => {
+    if (!cats || !product?.category_id) return [];
+    const path: Array<{ id: string; name: string }> = [];
+    let current: any = cats.find((c: any) => c.id === product.category_id);
+    while (current) {
+      path.unshift({ id: current.id, name: current.name });
+      current = current.parent_id ? cats.find((c: any) => c.id === current.parent_id) : undefined;
+    }
+    return path;
+  }, [cats, product?.category_id]);
 
   const images = useMemo(
     () => (product?.product_images ?? []).sort((a: any, b: any) => a.position - b.position),
@@ -279,6 +302,16 @@ function ProductPage() {
 
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">{product.name}</h1>
+          {catBreadcrumb.length > 0 && (
+            <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+              {catBreadcrumb.map((c, i) => (
+                <span key={c.id} className="flex items-center gap-1">
+                  {i > 0 && <ChevronRight className="h-3 w-3" />}
+                  <span>{c.name}</span>
+                </span>
+              ))}
+            </div>
+          )}
           <div className="mt-3 flex flex-col gap-1">
             {product.compare_at_price &&
               Number(product.compare_at_price) > Number(product.price) && (

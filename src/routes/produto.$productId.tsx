@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { useCart, buildWhatsappMessage, whatsappLink } from "@/lib/cart";
 import { toast } from "sonner";
-import { ArrowLeft, ShoppingBag, MessageCircle, X } from "lucide-react";
+import { ShoppingBag, MessageCircle, X, ChevronRight } from "lucide-react";
 import { colorToCss } from "@/lib/color-map";
 import {
   AlertDialog,
@@ -92,6 +92,29 @@ function ProductContent() {
       return data;
     },
   });
+
+  const { data: cats } = useQuery({
+    queryKey: ["public-cats", store?.id],
+    enabled: !!store?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, parent_id")
+        .eq("store_id", store!.id);
+      return data ?? [];
+    },
+  });
+
+  const catBreadcrumb = useMemo(() => {
+    if (!cats || !product?.category_id) return [];
+    const path: Array<{ id: string; name: string }> = [];
+    let current: any = cats.find((c: any) => c.id === product.category_id);
+    while (current) {
+      path.unshift({ id: current.id, name: current.name });
+      current = current.parent_id ? cats.find((c: any) => c.id === current.parent_id) : undefined;
+    }
+    return path;
+  }, [cats, product?.category_id]);
 
   const images = useMemo(
     () => (product?.product_images ?? []).sort((a: any, b: any) => a.position - b.position),
@@ -272,14 +295,50 @@ function ProductContent() {
     toast.success("Produto adicionado! Continue comprando");
   }
 
+  function navigateToCat(index: number) {
+    navigate({
+      to: "/",
+      search: {
+        dept: index >= 0 ? (catBreadcrumb[0]?.id ?? undefined) : undefined,
+        cat: index >= 1 ? (catBreadcrumb[1]?.id ?? undefined) : undefined,
+        brand: index >= 2 ? (catBreadcrumb[2]?.id ?? undefined) : undefined,
+      },
+    });
+  }
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
-      <Link
-        to="/"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      <nav
+        aria-label="Breadcrumb"
+        className="flex flex-wrap items-center gap-x-1 gap-y-0.5 overflow-x-auto text-sm text-muted-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar
-      </Link>
+        <span className="flex items-center gap-x-1 whitespace-nowrap">
+          <Link
+            to="/"
+            className="underline-offset-2 transition-colors hover:text-foreground hover:underline"
+          >
+            Home
+          </Link>
+        </span>
+        {catBreadcrumb.map((c, i) => {
+          const isLast = i === catBreadcrumb.length - 1;
+          return (
+            <span key={c.id} className="flex items-center gap-x-1 whitespace-nowrap">
+              <ChevronRight className="h-3 w-3 shrink-0" />
+              {isLast ? (
+                <span className="font-medium text-foreground">{c.name}</span>
+              ) : (
+                <button
+                  onClick={() => navigateToCat(i)}
+                  className="cursor-pointer underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                >
+                  {c.name}
+                </button>
+              )}
+            </span>
+          );
+        })}
+      </nav>
 
       <div className="mt-4 grid gap-8 md:grid-cols-2">
         <div>
