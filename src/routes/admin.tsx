@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useInactivityTimeout } from "@/hooks/useInactivityTimeout";
+import { InactivityWarningDialog } from "@/components/admin/InactivityWarningDialog";
 import { Button } from "@/components/ui/button";
 import {
   Store,
@@ -32,6 +34,15 @@ function AdminLayout() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
+
+  const handleInactivityLogout = useCallback(async () => {
+    await signOut();
+    navigate({ to: "/auth" });
+  }, [signOut, navigate]);
+
+  const { showWarning, continueSession } = useInactivityTimeout({
+    onLogout: handleInactivityLogout,
+  });
 
   const { data: store } = useQuery({
     queryKey: ["my-store", user?.id],
@@ -223,6 +234,12 @@ function AdminLayout() {
           <Outlet />
         </div>
       </main>
+
+      <InactivityWarningDialog
+        open={showWarning}
+        onContinue={continueSession}
+        onLogout={handleInactivityLogout}
+      />
     </div>
   );
 }
