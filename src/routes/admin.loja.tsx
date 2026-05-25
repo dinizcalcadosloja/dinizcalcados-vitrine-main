@@ -300,7 +300,7 @@ function StoreSettings() {
           <Label>Data de criação do domínio</Label>
           <Input
             type="date"
-            value={form.domain_created_at ?? ""}
+            value={form.domain_created_at ? form.domain_created_at.slice(0, 10) : ""}
             onChange={(e) => setForm({ ...form, domain_created_at: e.target.value || null })}
           />
           <p className="text-xs text-muted-foreground">
