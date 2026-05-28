@@ -135,18 +135,14 @@ function AuthPage() {
               borderRadius: 12,
               marginBottom: 16,
               boxShadow: `0 0 24px ${GOLD}33`,
+              overflow: "hidden",
             }}
           >
-            <span
-              style={{
-                fontSize: 32,
-                fontWeight: 800,
-                color: GOLD,
-                letterSpacing: "-2px",
-              }}
-            >
-              MM
-            </span>
+            <img
+              src="/favicon.png"
+              alt="Diniz Calçados"
+              style={{ width: 64, height: 64, objectFit: "contain" }}
+            />
           </div>
           <h1 style={{ color: "#fff", fontSize: 22, fontWeight: 700, margin: 0 }}>
             Diniz Calçados
