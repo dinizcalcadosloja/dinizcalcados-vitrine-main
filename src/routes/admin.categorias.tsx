@@ -24,6 +24,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DndContext,
   closestCenter,
   PointerSensor,
@@ -83,6 +93,7 @@ function CategoriesPage() {
   const [newName, setNewName] = useState("");
   const [newParentId, setNewParentId] = useState<string>("__root__");
   const [newType, setNewType] = useState<CategoryType>("category");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: store } = useQuery({
     queryKey: ["my-store", user?.id],
@@ -96,7 +107,7 @@ function CategoriesPage() {
     enabled: !!store,
     queryFn: async () =>
       ((await supabase.from("categories").select("*").eq("store_id", store!.id).order("position"))
-        .data ?? []) as Category[],
+        .data ?? []) as unknown as Category[],
   });
 
   const allCats = cats ?? [];
@@ -113,7 +124,7 @@ function CategoriesPage() {
       parent_id: parentId,
       position: siblings.length,
       type: newType,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else {
       setNewName("");
@@ -122,11 +133,13 @@ function CategoriesPage() {
   }
 
   async function remove(id: string) {
-    const hasChildren = allCats.some((c) => c.parent_id === id);
-    const msg = hasChildren
-      ? "Excluir esta categoria e todas as subcategorias/marcas filhas?"
-      : "Excluir esta categoria?";
-    if (!confirm(msg)) return;
+    setPendingDeleteId(id);
+  }
+
+  async function doRemove() {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) toast.error(error.message);
     else refetch();
@@ -140,7 +153,10 @@ function CategoriesPage() {
   }
 
   async function changeType(id: string, type: CategoryType) {
-    const { error } = await supabase.from("categories").update({ type }).eq("id", id);
+    const { error } = await supabase
+      .from("categories")
+      .update({ type } as any)
+      .eq("id", id);
     if (error) toast.error(error.message);
     else refetch();
   }
@@ -214,6 +230,33 @@ function CategoriesPage() {
           </Button>
         </div>
       </form>
+
+      <AlertDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir categoria</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteId && allCats.some((c) => c.parent_id === pendingDeleteId)
+                ? "Tem certeza que deseja excluir esta categoria e todas as subcategorias/marcas filhas? Esta ação não pode ser desfeita."
+                : "Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={doRemove}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Tree ── */}
       {roots.length === 0 ? (
@@ -373,7 +416,7 @@ function CategoryNode({
       parent_id: cat.id,
       position: children.length,
       type: childType,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else {
       setChildName("");
